@@ -137,7 +137,7 @@ export function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) 
 
                 {/* Draw path with gradient */}
                 <polyline
-                  points={entry.path.map((p) => `${p.x * 100},${p.y * 100}`).join(" ")}
+                  points={entry.path?.map((p) => `${p.x * 100},${p.y * 100}`).join(" ") || ""}
                   fill="none"
                   stroke={`url(#${gradientId})`}
                   strokeWidth="2"
@@ -196,9 +196,9 @@ export function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) 
                 )}
 
                 {/* Add dots for intermediate points */}
-                {entry.path.map((point, index) => {
+                {entry.path?.map((point, index) => {
                   // Skip start and end points
-                  if (index === 0 || index === entry.path.length - 1) return null
+                  if (index === 0 || index === entry.path!.length - 1) return null
 
                   return (
                     <circle key={index} cx={point.x * 100} cy={point.y * 100} r="1.5" fill="rgba(99, 102, 241, 0.7)" />
@@ -221,7 +221,7 @@ export function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) 
               </div>
             </div>
             <div className="mt-2 text-xs text-gray-500 flex justify-between">
-              <span>Path length: {entry.path.length} points</span>
+              <span>Path length: {entry.path?.length || 0} points</span>
               <div className="flex items-center gap-3">
                 <span className="flex items-center">
                   <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span> Start
