@@ -285,17 +285,11 @@ export function EmotionCircumplex({
           {/* Base plain white background */}
           <div className="absolute inset-0 bg-white"></div>
           
-          {/* Quadrants with improved color separation */}
+          {/* Quadrants with improved color separation - removed accent circles */}
           <div className={`absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-100/80 to-red-200/70 transition-opacity duration-200 ${hoveredQuadrant === "topLeft" ? "opacity-100" : "opacity-80"}`}></div>
           <div className={`absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-tr from-yellow-100/80 to-amber-200/70 transition-opacity duration-200 ${hoveredQuadrant === "topRight" ? "opacity-100" : "opacity-80"}`}></div>
           <div className={`absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-100/80 to-sky-200/70 transition-opacity duration-200 ${hoveredQuadrant === "bottomLeft" ? "opacity-100" : "opacity-80"}`}></div>
           <div className={`absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-br from-green-100/80 to-emerald-200/70 transition-opacity duration-200 ${hoveredQuadrant === "bottomRight" ? "opacity-100" : "opacity-80"}`}></div>
-          
-          {/* Color accent circles at quadrant centers */}
-          <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-red-400/20"></div>
-          <div className="absolute top-1/4 left-3/4 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-yellow-400/20"></div>
-          <div className="absolute top-3/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-blue-400/20"></div>
-          <div className="absolute top-3/4 left-3/4 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-green-400/20"></div>
           
           {/* Grid overlay for better positioning reference */}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLWRhc2hhcnJheT0iMiAyIiAvPjwvc3ZnPg==')] opacity-30"></div>

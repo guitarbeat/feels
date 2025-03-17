@@ -378,20 +378,31 @@ export default function EmotionTracker() {
   }, [recordingMode, editingEntryIndex])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4 md:p-8 font-sans">
-      <h1 className="text-3xl font-bold text-indigo-800 mb-6">Emotion Tracker</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 font-sans">
+      <h1 className="text-3xl font-bold text-indigo-800 mb-4 md:mb-6 flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+          <span className="text-xl text-indigo-600">😊</span>
+        </div>
+        Emotion Tracker
+      </h1>
 
       <div className="w-full max-w-4xl">
         <Tabs defaultValue="circumplex" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="circumplex">Circumplex Model</TabsTrigger>
-            <TabsTrigger value="history">Emotion History</TabsTrigger>
-            <TabsTrigger value="insights">Scientific Insights</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4 rounded-xl overflow-hidden bg-indigo-50/50 p-1">
+            <TabsTrigger value="circumplex" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+              Circumplex Model
+            </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+              Emotion History
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+              Scientific Insights
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="circumplex" className="mt-4">
-            <Card className="overflow-hidden border-0 shadow-lg">
-              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-purple-50">
+          <TabsContent value="circumplex">
+            <Card className="overflow-hidden border-0 shadow-lg rounded-xl bg-white">
+              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50/60 to-purple-50/60 border-b border-gray-100">
                 <CardTitle className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <InfoIcon className="w-5 h-5 text-indigo-600" />
@@ -435,33 +446,39 @@ export default function EmotionTracker() {
                 </CardTitle>
                 <CardDescription>{getStatusMessage()}</CardDescription>
               </CardHeader>
+              
+              {/* Better organization of content */}
               <CardContent className="p-6">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="relative w-full max-w-md aspect-square mx-auto">
-                    <EmotionCircumplex
-                      position={markerPosition}
-                      onPositionChange={handlePositionChange}
-                      onCircumplexClick={handleCircumplexClick}
-                      onDragStart={() => setIsDragging(true)}
-                      onDragEnd={() => setIsDragging(false)}
-                      recordingMode={recordingMode}
-                      startPosition={startPosition}
-                    />
+                <div className="grid md:grid-cols-[1fr,auto] gap-6">
+                  {/* Left side - Emotion Circumplex */}
+                  <div className="relative md:max-w-md w-full mx-auto">
+                    <div className="relative w-full aspect-square">
+                      <EmotionCircumplex
+                        position={markerPosition}
+                        onPositionChange={handlePositionChange}
+                        onCircumplexClick={handleCircumplexClick}
+                        onDragStart={() => setIsDragging(true)}
+                        onDragEnd={() => setIsDragging(false)}
+                        recordingMode={recordingMode}
+                        startPosition={startPosition}
+                      />
 
-                    {/* Path Visualization */}
-                    {currentDragPath.length > 1 && <EmotionPath path={currentDragPath} />}
+                      {/* Path Visualization overlay */}
+                      {currentDragPath.length > 1 && <EmotionPath path={currentDragPath} />}
+                    </div>
                   </div>
-
-                  <div className="flex flex-col items-center w-full max-w-md">
-                    {/* Emotion Information Panel */}
-                    <div className="text-center w-full">
+                  
+                  {/* Right side - Controls and info */}
+                  <div className="flex flex-col space-y-6 w-full md:min-w-[240px]">
+                    {/* Emotion information panel */}
+                    <div className="space-y-4">
                       {/* Show both start and current emotions when in path recording mode */}
                       {(recordingMode === "start-selected" ||
                         recordingMode === "recording" ||
                         recordingMode === "completed") && (
-                        <div className="mb-4 p-3 bg-white rounded-lg shadow-sm">
+                        <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
                           <h3 className="text-sm font-medium text-gray-500 mb-2">Starting Emotion</h3>
-                          <div className="flex items-center gap-2 justify-center">
+                          <div className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded-full ${startEmotionColor}`}></div>
                             <p className="text-base font-medium text-gray-700 flex items-center gap-1">
                               <span className="text-xl">{startEmotionData.emoji}</span> {startEmotionData.label}
@@ -475,136 +492,113 @@ export default function EmotionTracker() {
                       )}
 
                       {/* Current/End Emotion */}
-                      <div className="flex items-center gap-2 mb-3 justify-center">
-                        <div className={`w-4 h-4 rounded-full ${emotionColor}`}></div>
-                        <p className="text-2xl font-bold text-indigo-700 flex items-center gap-2">
-                          <span className="text-3xl">{currentEmoji}</span> {currentEmotion}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="bg-white shadow-sm p-4 rounded-lg">
-                          <p className="text-sm text-gray-500 mb-1">Valence</p>
-                          <p className="text-lg font-medium">{valence}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div
-                              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${(valence + 1) * 50}%` }}
-                            ></div>
-                          </div>
+                      <div className="p-3 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-lg border border-gray-100 shadow-sm">
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Current Emotion</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-4 h-4 rounded-full ${emotionColor}`}></div>
+                          <p className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+                            <span className="text-2xl">{currentEmoji}</span> {currentEmotion}
+                          </p>
                         </div>
 
-                        <div className="bg-white shadow-sm p-4 rounded-lg">
-                          <p className="text-sm text-gray-500 mb-1">Arousal</p>
-                          <p className="text-lg font-medium">{arousal}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div
-                              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${(arousal + 1) * 50}%` }}
-                            ></div>
+                        <div className="grid grid-cols-2 gap-4 mt-3">
+                          <div className="bg-white shadow-sm p-2 rounded-md">
+                            <p className="text-xs text-gray-500 mb-1">Valence</p>
+                            <p className="text-lg font-medium">{valence}</p>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                              <div
+                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${(valence + 1) * 50}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div className="bg-white shadow-sm p-2 rounded-md">
+                            <p className="text-xs text-gray-500 mb-1">Arousal</p>
+                            <p className="text-lg font-medium">{arousal}</p>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                              <div
+                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${(arousal + 1) * 50}%` }}
+                              ></div>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-3 justify-center">
-                        {editingEntryIndex !== null ? (
-                          <>
+                    {/* Action Buttons - better organized */}
+                    <div className="flex flex-col gap-2">
+                      {editingEntryIndex !== null ? (
+                        <>
+                          <Button
+                            onClick={() => setShowConfirmDialog(true)}
+                            className="gap-2 bg-indigo-600 hover:bg-indigo-700 w-full"
+                          >
+                            <EditIcon className="w-4 h-4" />
+                            Save Changes
+                          </Button>
+                          <Button variant="outline" onClick={cancelOperation} className="gap-2 border-indigo-200 w-full">
+                            <XCircleIcon className="w-4 h-4" />
+                            Cancel Edit
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {recordingMode === "start-selected" && (
+                            <Button onClick={startRecording} className="gap-2 bg-red-500 hover:bg-red-600 w-full">
+                              <PlayIcon className="w-4 h-4" />
+                              Record Path
+                            </Button>
+                          )}
+
+                          {recordingMode === "recording" && (
+                            <Button onClick={stopRecording} className="gap-2 bg-red-500 hover:bg-red-600 w-full">
+                              <StopCircleIcon className="w-4 h-4" />
+                              Stop Recording
+                            </Button>
+                          )}
+
+                          {(recordingMode === "start-selected" || recordingMode === "completed") && (
                             <Button
                               onClick={() => setShowConfirmDialog(true)}
-                              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+                              className="gap-2 bg-indigo-600 hover:bg-indigo-700 w-full"
                             >
-                              <EditIcon className="w-4 h-4" />
-                              Save Changes
+                              <BookmarkIcon className="w-4 h-4" />
+                              {recordingMode === "completed" ? "Log Emotion Path" : "Log Current Emotion"}
                             </Button>
-                            <Button variant="outline" onClick={cancelOperation} className="gap-2 border-indigo-200">
-                              <XCircleIcon className="w-4 h-4" />
-                              Cancel Edit
+                          )}
+
+                          {recordingMode !== "idle" && (
+                            <Button variant="outline" onClick={resetSelection} className="gap-2 border-indigo-200 w-full">
+                              <UndoIcon className="w-4 h-4" />
+                              Reset
                             </Button>
-                          </>
-                        ) : (
-                          <>
-                            {recordingMode === "idle" && (
-                              <Button
-                                onClick={() => setShowConfirmDialog(true)}
-                                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-                                disabled={true}
-                              >
-                                <TargetIcon className="w-4 h-4" />
-                                Set Starting Point
-                              </Button>
-                            )}
+                          )}
+                        </>
+                      )}
+                    </div>
 
-                            {recordingMode === "start-selected" && (
-                              <>
-                                <Button onClick={startRecording} className="gap-2 bg-red-500 hover:bg-red-600">
-                                  <PlayIcon className="w-4 h-4" />
-                                  Record Path
-                                </Button>
-                                <Button
-                                  onClick={() => setShowConfirmDialog(true)}
-                                  className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-                                >
-                                  <BookmarkIcon className="w-4 h-4" />
-                                  Log Current Emotion
-                                </Button>
-                              </>
-                            )}
-
-                            {recordingMode === "recording" && (
-                              <Button onClick={stopRecording} className="gap-2 bg-red-500 hover:bg-red-600">
-                                <StopCircleIcon className="w-4 h-4" />
-                                Stop Recording
-                              </Button>
-                            )}
-
-                            {recordingMode === "completed" && (
-                              <Button
-                                onClick={() => setShowConfirmDialog(true)}
-                                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-                              >
-                                <BookmarkIcon className="w-4 h-4" />
-                                Log Emotion Path
-                              </Button>
-                            )}
-
-                            {recordingMode !== "idle" && (
-                              <Button variant="outline" onClick={resetSelection} className="gap-2 border-indigo-200">
-                                <UndoIcon className="w-4 h-4" />
-                                Reset
-                              </Button>
-                            )}
-                          </>
-                        )}
-
-                        {undoStack.length > 0 && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" onClick={undoLastAction} className="gap-2 border-indigo-200">
-                                  <UndoIcon className="w-4 h-4" />
-                                  Undo
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Undo last action</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-
-                        {emotionLog.length > 0 && (
-                          <Button variant="outline" onClick={exportLog} className="gap-2 border-indigo-200">
-                            <SaveIcon className="w-4 h-4" />
-                            Export Log
-                          </Button>
-                        )}
-                      </div>
+                    {/* Additional actions */}
+                    <div className="flex flex-wrap gap-2">
+                      {undoStack.length > 0 && (
+                        <Button variant="outline" onClick={undoLastAction} className="gap-1 border-indigo-200 text-xs h-8">
+                          <UndoIcon className="w-3 h-3" />
+                          Undo
+                        </Button>
+                      )}
+                      {emotionLog.length > 0 && (
+                        <Button variant="outline" onClick={exportLog} className="gap-1 border-indigo-200 text-xs h-8">
+                          <SaveIcon className="w-3 h-3" />
+                          Export
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="bg-gray-50 px-6 py-3">
+              
+              <CardFooter className="bg-gray-50 px-6 py-3 border-t border-gray-100">
                 <div className="text-xs text-gray-500 flex items-center gap-2">
                   <InfoIcon className="h-3 w-3" />
                   {recordingMode === "recording"
