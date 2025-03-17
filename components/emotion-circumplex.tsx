@@ -271,6 +271,32 @@ export function EmotionCircumplex({
     );
   };
 
+  // Add keyboard navigation support
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    const step = 0.05;
+    let newPosition = { ...position };
+    
+    switch (event.key) {
+      case 'ArrowUp':
+        newPosition.y = Math.max(0, position.y - step);
+        break;
+      case 'ArrowDown':
+        newPosition.y = Math.min(1, position.y + step);
+        break;
+      case 'ArrowLeft':
+        newPosition.x = Math.max(0, position.x - step);
+        break;
+      case 'ArrowRight':
+        newPosition.x = Math.min(1, position.x + step);
+        break;
+      default:
+        return;
+    }
+    
+    onPositionChange(newPosition);
+    event.preventDefault();
+  };
+  
   return (
     <div className="relative">
       <div
@@ -279,6 +305,11 @@ export function EmotionCircumplex({
         onClick={handlePlaneClick}
         onMouseMove={handleMouseMoveOverPlane}
         onMouseLeave={() => setHoveredQuadrant(null)}
+        tabIndex={0}
+        role="slider"
+        aria-label="Emotion selector"
+        aria-valuetext={`Valence: ${getValenceArousal(position.x, position.y).valence.toFixed(2)}, Arousal: ${getValenceArousal(position.x, position.y).arousal.toFixed(2)}`}
+        onKeyDown={handleKeyDown}
       >
         {/* Background with cleaner, more distinct quadrants */}
         <div className="absolute inset-0">

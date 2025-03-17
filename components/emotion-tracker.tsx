@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import {
   BookmarkIcon,
   HistoryIcon,
@@ -43,6 +43,7 @@ import { EmotionCircumplex } from "@/components/emotion-circumplex"
 import { EmotionPath } from "@/components/emotion-path"
 import { type EmotionLogEntry, EmotionLogItem } from "@/components/emotion-log-item"
 import { EmotionInsights } from "@/components/emotion-insights"
+import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage';
 
 export default function EmotionTracker() {
   const [markerPosition, setMarkerPosition] = useState({ x: 0.5, y: 0.5 }) // Normalized 0-1 values
@@ -376,6 +377,19 @@ export default function EmotionTracker() {
         return ""
     }
   }, [recordingMode, editingEntryIndex])
+
+  // Load data from localStorage on initial render
+  useEffect(() => {
+    const savedLog = loadFromLocalStorage<EmotionLogEntry[]>('emotion-log', []);
+    if (savedLog.length > 0) {
+      setEmotionLog(savedLog);
+    }
+  }, []);
+  
+  // Save data to localStorage when emotionLog changes
+  useEffect(() => {
+    saveToLocalStorage('emotion-log', emotionLog);
+  }, [emotionLog]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 font-sans">

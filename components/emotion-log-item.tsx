@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, memo } from "react"
 import { format } from "date-fns"
 import { ChevronDownIcon, ChevronUpIcon, ZoomInIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,7 @@ interface EmotionLogItemProps {
 }
 
 // Update the EmotionLogItem component to display notes
-export function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) {
+export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) {
   const [expanded, setExpanded] = useState(false)
   const [chartDimensions, setChartDimensions] = useState({ width: 0, height: 0 })
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null)
@@ -464,5 +464,5 @@ export function EmotionLogItem({ entry, getEmotionColor }: EmotionLogItemProps) 
       </div>
     </Card>
   )
-}
+})
 
