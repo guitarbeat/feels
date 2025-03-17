@@ -14,6 +14,8 @@ import {
   PlayIcon,
   StopCircleIcon,
   TargetIcon,
+  FileTextIcon,
+  FileJsonIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -39,11 +41,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { EmotionCircumplex } from "@/components/emotion-circumplex"
 import { EmotionPath } from "@/components/emotion-path"
 import { type EmotionLogEntry, EmotionLogItem } from "@/components/emotion-log-item"
 import { EmotionInsights } from "@/components/emotion-insights"
-import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage';
+import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage'
+import { exportEmotionData, ExportFormat } from '@/lib/exporters'
 
 export default function EmotionTracker() {
   const [markerPosition, setMarkerPosition] = useState({ x: 0.5, y: 0.5 }) // Normalized 0-1 values
@@ -347,16 +356,13 @@ export default function EmotionTracker() {
   const emotionColor = getEmotionColor(valence, arousal)
   const startEmotionColor = getEmotionColor(startVA.valence, startVA.arousal)
 
-  // Export emotion log as JSON
-  const exportLog = useCallback(() => {
-    const dataStr = JSON.stringify(emotionLog, null, 2)
-    const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)
-    const exportFileDefaultName = `emotion-log-${new Date().toISOString().slice(0, 10)}.json`
-    const linkElement = document.createElement("a")
-    linkElement.setAttribute("href", dataUri)
-    linkElement.setAttribute("download", exportFileDefaultName)
-    linkElement.click()
-  }, [emotionLog])
+  // Replace the existing exportLog function with this enhanced version
+  const exportLog = useCallback((format: ExportFormat = 'json') => {
+    if (emotionLog.length === 0) return;
+    
+    const filename = `emotion-log-${new Date().toISOString().slice(0, 10)}`;
+    exportEmotionData(emotionLog, format, filename);
+  }, [emotionLog]);
 
   // Get status message based on recording mode
   const getStatusMessage = useCallback(() => {
@@ -602,10 +608,24 @@ export default function EmotionTracker() {
                         </Button>
                       )}
                       {emotionLog.length > 0 && (
-                        <Button variant="outline" onClick={exportLog} className="gap-1 border-indigo-200 text-xs h-8">
-                          <SaveIcon className="w-3 h-3" />
-                          Export
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="gap-1 border-indigo-200 text-xs h-8">
+                              <SaveIcon className="w-3 h-3" />
+                              Export
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => exportLog('json')} className="cursor-pointer">
+                              <FileJsonIcon className="w-3.5 h-3.5 mr-2" />
+                              <span>Export as JSON</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => exportLog('csv')} className="cursor-pointer">
+                              <FileTextIcon className="w-3.5 h-3.5 mr-2" />
+                              <span>Export as CSV</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
                   </div>
