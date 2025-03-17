@@ -217,37 +217,40 @@ export function EmotionCircumplex({
     { x: 0.85, y: 0.85, label: "Tranquil", emoji: "🌿", color: "text-green-700" },
     { x: 0.78, y: 0.75, label: "Content", emoji: "😊", color: "text-green-700" },
   ]
-
-  // Get quadrant info based on current hover state
   const getQuadrantInfo = (quadrant: string) => {
-    switch(quadrant) {
-      case "topRight": return { 
-        name: "Excitement", 
-        description: "High energy, positive emotions",
-        color: "from-yellow-200/80 to-amber-300/70",
-        hoverClass: hoveredQuadrant === "topRight" ? "bg-yellow-200/90" : "bg-gradient-to-tr from-yellow-200/80 to-amber-300/70"
-      };
-      case "topLeft": return { 
-        name: "Distress", 
-        description: "High energy, negative emotions",
-        color: "from-red-200/80 to-red-300/70", 
-        hoverClass: hoveredQuadrant === "topLeft" ? "bg-red-200/90" : "bg-gradient-to-tl from-red-200/80 to-red-300/70"
-      };
-      case "bottomLeft": return { 
-        name: "Depression", 
-        description: "Low energy, negative emotions",
-        color: "from-blue-200/80 to-sky-300/70", 
-        hoverClass: hoveredQuadrant === "bottomLeft" ? "bg-blue-200/90" : "bg-gradient-to-bl from-blue-200/80 to-sky-300/70"
-      };
-      case "bottomRight": return { 
-        name: "Contentment", 
-        description: "Low energy, positive emotions",
-        color: "from-green-200/80 to-emerald-300/70",
-        hoverClass: hoveredQuadrant === "bottomRight" ? "bg-green-200/90" : "bg-gradient-to-br from-green-200/80 to-emerald-300/70"
-      };
-      default: return { name: "", description: "", color: "", hoverClass: "" };
+    switch (quadrant) {
+      case "topRight":
+        return {
+          name: "Excitement",
+          description: "High energy, positive",
+          color: "",
+          hoverClass: ""
+        }
+      case "topLeft":
+        return {
+          name: "Distress",
+          description: "High energy, negative",
+          color: "",
+          hoverClass: ""
+        }
+      case "bottomLeft":
+        return {
+          name: "Depression",
+          description: "Low energy, negative",
+          color: "",
+          hoverClass: ""
+        }
+      case "bottomRight":
+        return {
+          name: "Contentment",
+          description: "Low energy, positive",
+          color: "",
+          hoverClass: ""
+        }
+      default:
+        return { name: "", description: "", color: "", hoverClass: "" }
     }
-  };
+  }
 
   // Helper function to get valence and arousal from position
   const getValenceArousal = (x: number, y: number) => {
