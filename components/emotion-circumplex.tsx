@@ -187,24 +187,35 @@ export function EmotionCircumplex({
     const distance = Math.sqrt(Math.pow(mousePosition.x - labelX, 2) + Math.pow(mousePosition.y - labelY, 2));
     return distance < threshold && !isDragging;
   }
-
-  // Emotion label positions
+  // Organized emotion label positions
   const emotionLabels = [
-    // Top-right quadrant - High arousal, positive valence (Yellow)
+    // Top-right (High arousal, positive valence)
     { x: 0.75, y: 0.15, label: "Excited", emoji: "🤩", color: "text-yellow-700" },
     { x: 0.85, y: 0.3, label: "Happy", emoji: "😄", color: "text-yellow-700" },
+    { x: 0.88, y: 0.22, label: "Cheerful", emoji: "😁", color: "text-yellow-700" },
+    { x: 0.78, y: 0.25, label: "Delighted", emoji: "😍", color: "text-yellow-700" },
+    { x: 0.82, y: 0.15, label: "Euphoric", emoji: "🤗", color: "text-yellow-700" },
 
-    // Top-left quadrant - High arousal, negative valence (Red)
+    // Top-left (High arousal, negative valence)
     { x: 0.25, y: 0.15, label: "Angry", emoji: "😠", color: "text-red-700" },
     { x: 0.15, y: 0.3, label: "Anxious", emoji: "😰", color: "text-red-700" },
+    { x: 0.2,  y: 0.2, label: "Annoyed", emoji: "😖", color: "text-red-700" },
+    { x: 0.15, y: 0.25, label: "Frustrated", emoji: "😤", color: "text-red-700" },
+    { x: 0.22, y: 0.18, label: "Tense", emoji: "😬", color: "text-red-700" },
 
-    // Bottom-left quadrant - Low arousal, negative valence (Blue)
+    // Bottom-left (Low arousal, negative valence)
     { x: 0.25, y: 0.85, label: "Sad", emoji: "😢", color: "text-blue-700" },
-    { x: 0.15, y: 0.7, label: "Depressed", emoji: "😔", color: "text-blue-700" },
+    { x: 0.15, y: 0.7,  label: "Depressed", emoji: "😔", color: "text-blue-700" },
+    { x: 0.25, y: 0.9,  label: "Hopeless", emoji: "😩", color: "text-blue-700" },
+    { x: 0.2,  y: 0.8,  label: "Discouraged", emoji: "😞", color: "text-blue-700" },
+    { x: 0.18, y: 0.75, label: "Lonely", emoji: "😟", color: "text-blue-700" },
 
-    // Bottom-right quadrant - Low arousal, positive valence (Green)
+    // Bottom-right (Low arousal, positive valence)
     { x: 0.75, y: 0.85, label: "Relaxed", emoji: "😌", color: "text-green-700" },
-    { x: 0.85, y: 0.7, label: "Calm", emoji: "😇", color: "text-green-700" },
+    { x: 0.85, y: 0.7,  label: "Calm", emoji: "😇", color: "text-green-700" },
+    { x: 0.8,  y: 0.8,  label: "Serene", emoji: "😌", color: "text-green-700" },
+    { x: 0.85, y: 0.85, label: "Tranquil", emoji: "🌿", color: "text-green-700" },
+    { x: 0.78, y: 0.75, label: "Content", emoji: "😊", color: "text-green-700" },
   ]
 
   // Get quadrant info based on current hover state
