@@ -102,3 +102,53 @@
   }
 }
 
+/* Custom animation keyframes */
+@keyframes dash {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.7));
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add support for radial gradients */
+.bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+/* Helper classes for chart interactivity */
+.emotion-marker {
+  animation: pulse-glow 2s infinite;
+  transition: all 0.3s ease-out;
+}
+
+.chart-tooltip {
+  animation: fade-in-up 0.2s ease-out;
+}
+
+/* Improve chart path visualization */
+.emotion-path {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+}
+
