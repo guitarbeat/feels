@@ -143,7 +143,7 @@ export function EmotionCircumplex({
   // Function to determine if a label should be visible based on mouse proximity
   const isLabelVisible = (labelX: number, labelY: number, threshold = 0.08) => {
     const distance = Math.sqrt(Math.pow(mousePosition.x - labelX, 2) + Math.pow(mousePosition.y - labelY, 2))
-    return distance < threshold || isDragging
+    return distance < threshold && !isDragging  // Only show on hover, hide when dragging
   }
 
   // Emotion label positions
@@ -168,30 +168,33 @@ export function EmotionCircumplex({
   return (
     <div
       ref={planeRef}
-      className="relative bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-xl cursor-pointer overflow-hidden shadow-lg w-full aspect-square transition-all duration-300"
+      className="relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl cursor-pointer overflow-hidden shadow-lg w-full aspect-square transition-all duration-300 hover:shadow-xl"
       onClick={handlePlaneClick}
       onMouseMove={handleMouseMoveOverPlane}
     >
-      {/* Enhanced background with radial gradients for emotional themes */}
+      {/* Enhanced background with improved gradients */}
       <div className="absolute inset-0">
-        {/* Create a complex background with multiple gradients */}
-        <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-radial from-red-400/70 via-red-300/40 to-transparent"></div>
-        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-radial from-yellow-300/70 via-yellow-200/40 to-transparent"></div>
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-radial from-green-400/70 via-green-300/40 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-radial from-blue-400/70 via-blue-300/40 to-transparent"></div>
+        {/* Create a complex background with softer, more vibrant gradients */}
+        <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-radial from-red-400/60 via-red-300/30 to-transparent"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-radial from-amber-300/60 via-yellow-200/30 to-transparent"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-radial from-emerald-400/60 via-green-300/30 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-radial from-sky-400/60 via-blue-300/30 to-transparent"></div>
 
-        {/* Add diagonal gradients for smoother transitions */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-transparent via-yellow-500/10 to-transparent"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-bl from-transparent via-red-500/10 to-transparent"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-green-500/10 to-transparent"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tl from-transparent via-blue-500/10 to-transparent"></div>
+        {/* Add diagonal gradients for more depth */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-transparent via-yellow-500/5 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-bl from-transparent via-red-500/5 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-green-500/5 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tl from-transparent via-blue-500/5 to-transparent"></div>
+        
+        {/* Add a subtle noise texture overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-30"></div>
       </div>
 
-      {/* Emotion labels throughout the circumplex - only visible on hover */}
+      {/* Emotion labels with better styling */}
       {emotionLabels.map((emotion, index) => (
         <div
           key={index}
-          className={`absolute text-xs font-medium ${emotion.color} bg-white/90 px-2 py-1 rounded-full shadow-sm flex items-center gap-1 transition-all duration-300 ${
+          className={`absolute text-xs font-medium ${emotion.color} bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-md flex items-center gap-1 transition-all duration-300 ${
             isLabelVisible(emotion.x, emotion.y) ? "opacity-100 scale-100" : "opacity-0 scale-90"
           }`}
           style={{
@@ -205,41 +208,41 @@ export function EmotionCircumplex({
       ))}
 
       {/* Axes with improved styling */}
-      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-gray-400/70"></div>
-      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-400/70"></div>
+      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-gray-400/50"></div>
+      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-400/50"></div>
 
       {/* Axis labels with improved styling */}
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Negative
       </div>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Positive
       </div>
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         High Energy
       </div>
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm"></div>
         Low Energy
       </div>
 
-      {/* Quadrant labels */}
-      <div className="absolute top-[25%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-red-700 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+      {/* Quadrant labels with improved styling */}
+      <div className="absolute top-[25%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-red-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Distress
       </div>
-      <div className="absolute top-[25%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-yellow-700 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute top-[25%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-yellow-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Excitement
       </div>
-      <div className="absolute top-[75%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-blue-700 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute top-[75%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-blue-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Depression
       </div>
-      <div className="absolute top-[75%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-green-700 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+      <div className="absolute top-[75%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-green-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
         Contentment
       </div>
 
-      {/* Start position marker (only shown when in recording mode) */}
+      {/* Start position marker with improved styling */}
       {(recordingMode === "start-selected" || recordingMode === "recording" || recordingMode === "completed") && (
         <div
-          className="absolute bg-green-500 rounded-full border-2 border-white shadow-md z-10"
+          className="absolute bg-gradient-to-br from-green-400 to-green-600 rounded-full border-2 border-white shadow-md z-10"
           style={{
             width: markerSize - 4,
             height: markerSize - 4,
@@ -254,12 +257,14 @@ export function EmotionCircumplex({
         </div>
       )}
 
-      {/* Current position marker */}
+      {/* Current position marker with improved styling */}
       <div
         className={`absolute rounded-full border-2 border-white shadow-lg cursor-grab ${
           isDragging ? "cursor-grabbing scale-110 shadow-xl" : ""
         } transition-all duration-200 ease-out z-20 ${
-          recordingMode === "recording" ? "bg-red-500" : "bg-gradient-to-br from-indigo-600 to-violet-600"
+          recordingMode === "recording" 
+            ? "bg-gradient-to-br from-red-500 to-rose-600" 
+            : "bg-gradient-to-br from-indigo-500 to-violet-700"
         }`}
         style={{
           width: markerSize,
@@ -280,19 +285,19 @@ export function EmotionCircumplex({
         ></span>
       </div>
 
-      {/* Recording indicator */}
+      {/* Recording indicator with improved styling */}
       {recordingMode === "recording" && (
-        <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 animate-pulse">
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 animate-pulse shadow-md">
           <span className="w-2 h-2 bg-white rounded-full"></span>
           REC
         </div>
       )}
 
       {/* Concentric circles with improved styling */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[85%] border border-gray-300/40 rounded-full"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] border border-gray-300/40 rounded-full"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35%] h-[35%] border border-gray-300/40 rounded-full"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10%] h-[10%] border border-gray-300/40 rounded-full bg-gray-100/50"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[85%] border border-gray-300/30 rounded-full"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] border border-gray-300/30 rounded-full"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35%] h-[35%] border border-gray-300/30 rounded-full"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10%] h-[10%] border border-gray-300/30 rounded-full bg-gray-100/30 backdrop-blur-sm"></div>
     </div>
   )
 }

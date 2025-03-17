@@ -33,7 +33,7 @@ export function EmotionPath({ path }: EmotionPathProps) {
       className="absolute top-0 left-0 w-full h-full pointer-events-none z-0"
       style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))" }}
     >
-      {/* Define gradient for the path */}
+      {/* Define gradient for the path with improved colors */}
       <defs>
         <linearGradient
           id={gradientId}
@@ -44,27 +44,29 @@ export function EmotionPath({ path }: EmotionPathProps) {
           y2={`${endPoint.y * 100}%`}
         >
           <stop offset="0%" stopColor="#4f46e5" />
-          <stop offset="50%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#d946ef" />
+          <stop offset="33%" stopColor="#6366f1" />
+          <stop offset="66%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#ec4899" />
         </linearGradient>
       </defs>
 
-      {/* Animated path with gradient */}
+      {/* Animated path with gradient and improved styling */}
       <polyline
         points={pathPoints}
         fill="none"
         stroke={`url(#${gradientId})`}
-        strokeWidth="3"
+        strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray="1000"
         strokeDashoffset="1000"
+        filter="drop-shadow(0 1px 3px rgba(0,0,0,0.15))"
         style={{
           animation: "dash 1.5s ease-in-out forwards",
         }}
       />
 
-      {/* Start point marker */}
+      {/* Start point marker with improved styling */}
       <g className="start-marker">
         <circle
           cx={`${startPoint.x * 100}%`}
@@ -73,6 +75,7 @@ export function EmotionPath({ path }: EmotionPathProps) {
           fill="#10b981"
           stroke="white"
           strokeWidth="2"
+          filter="drop-shadow(0 1px 3px rgba(0,0,0,0.2))"
         />
         <text
           x={`${startPoint.x * 100}%`}
@@ -82,13 +85,14 @@ export function EmotionPath({ path }: EmotionPathProps) {
           fill="#047857"
           fontSize="10"
           fontWeight="bold"
-          className="bg-white px-1 rounded"
+          className="bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-md"
+          filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
         >
           Start
         </text>
       </g>
 
-      {/* End point marker */}
+      {/* End point marker with improved styling */}
       <g className="end-marker">
         <circle
           cx={`${endPoint.x * 100}%`}
@@ -97,6 +101,7 @@ export function EmotionPath({ path }: EmotionPathProps) {
           fill="#ef4444"
           stroke="white"
           strokeWidth="2"
+          filter="drop-shadow(0 1px 3px rgba(0,0,0,0.2))"
         />
         <text
           x={`${endPoint.x * 100}%`}
@@ -106,25 +111,28 @@ export function EmotionPath({ path }: EmotionPathProps) {
           fill="#b91c1c"
           fontSize="10"
           fontWeight="bold"
-          className="bg-white px-1 rounded"
+          className="bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-md"
+          filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
         >
           End
         </text>
       </g>
 
-      {/* Add subtle dots at each point for better visualization */}
+      {/* Add subtle dots at each point with improved styling */}
       {path.map((point, index) => {
         // Skip start and end points as they have their own markers
         if (index === 0 || index === path.length - 1) return null
 
+        // Make points more visible with subtle glow effect
         return (
           <circle
             key={index}
             cx={`${point.x * 100}%`}
             cy={`${point.y * 100}%`}
-            r="2"
-            fill="rgba(99, 102, 241, 0.7)"
+            r="2.2"
+            fill="rgba(99, 102, 241, 0.8)"
             className="path-point"
+            filter="drop-shadow(0 0 1px rgba(255,255,255,0.7))"
           />
         )
       })}
