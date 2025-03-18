@@ -102,28 +102,32 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
     }
     
     setIsPlaying(true);
-    let currentIndex = 0;
-    
     const animate = () => {
-      if (!entry.path || currentIndex >= entry.path.length) {
-        setIsPlaying(false);
-        setActivePointIndex(null);
-        return;
-      }
+      let currentIndex = 0;
       
-      setActivePointIndex(currentIndex);
-      currentIndex++;
-      
-      if (currentIndex < entry.path.length) {
-        animationRef.current = requestAnimationFrame(() => {
-          setTimeout(animate, 200); // Control animation speed
-        });
-      } else {
-        setTimeout(() => {
+      const step = () => {
+        if (!entry.path || currentIndex >= entry.path.length) {
           setIsPlaying(false);
           setActivePointIndex(null);
-        }, 1000);
-      }
+          return;
+        }
+        
+        setActivePointIndex(currentIndex);
+        currentIndex++;
+        
+        if (currentIndex < entry.path.length) {
+          animationRef.current = requestAnimationFrame(() => {
+            setTimeout(step, 200);
+          });
+        } else {
+          setTimeout(() => {
+            setIsPlaying(false);
+            setActivePointIndex(null);
+          }, 1000);
+        }
+      };
+      
+      step();
     };
     
     animate();
