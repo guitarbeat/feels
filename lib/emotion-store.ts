@@ -116,3 +116,7 @@ export const useEmotionStore = create<EmotionStore>()(
     }
   )
 );
+
+// Add type caching
+type EmotionStoreType = ReturnType<typeof useEmotionStore>;
+export type { EmotionStoreType };
