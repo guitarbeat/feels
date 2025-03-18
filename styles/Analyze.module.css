@@ -1,0 +1,150 @@
+.container {
+  min-height: 100vh;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main {
+  padding: 2rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+.analysisContainer {
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.notEnoughData {
+  text-align: center;
+  padding: 2rem;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  margin: 2rem 0;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat {
+  padding: 1.5rem;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat h3 {
+  margin-top: 0;
+  color: #666;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.statLabel {
+  margin: 0;
+  color: #666;
+}
+
+.trendArrows {
+  font-size: 1.5rem;
+}
+
+.trendArrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.trendArrow span {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.insights {
+  padding: 1.5rem;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.insights h3 {
+  margin-top: 0;
+}
+
+.insights ul {
+  padding-left: 1.5rem;
+}
+
+.insights li {
+  margin-bottom: 0.75rem;
+}
+
+.historyPreview {
+  padding: 1.5rem;
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+}
+
+.historyPreview h3 {
+  margin-top: 0;
+}
+
+.emotionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.emotionItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border: 1px solid #f0f0f0;
+  border-radius: 5px;
+}
+
+.loading {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #0070f3;
+  border-radius: 5px;
+  background: white;
+  color: #0070f3;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.button:hover {
+  background: #0070f3;
+  color: white;
+}
