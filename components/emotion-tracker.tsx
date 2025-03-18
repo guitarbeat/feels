@@ -16,6 +16,10 @@ import {
   TargetIcon,
   FileTextIcon,
   FileJsonIcon,
+  TagIcon,
+  FolderIcon,
+  SearchIcon,
+  UploadIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -80,6 +84,19 @@ export default function EmotionTracker() {
   // Add new state for path optimization
   const [pathOptimizationLevel, setPathOptimizationLevel] = useState<'low'|'medium'|'high'>('medium');
   
+  // Add new states for memory bank features
+  const [collections, setCollections] = useState<{id: string, name: string}[]>([
+    {id: 'default', name: 'Default Collection'}
+  ]);
+  const [activeCollection, setActiveCollection] = useState('default');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [entryTags, setEntryTags] = useState<{[entryTimestamp: string]: string[]}>({});
+
   // Calculate valence and arousal from normalized position
   const getValenceArousal = useCallback((x: number, y: number) => {
     const valence = x * 2 - 1 // Normalize to -1 to 1
@@ -297,6 +314,7 @@ export default function EmotionTracker() {
         startArousal: startVA.arousal,
         path: currentDragPath.length > 1 ? [...currentDragPath] : updatedLog[editingEntryIndex].path,
         notes: emotionNotes, // Add notes
+        collection: activeCollection, // Add collection
       }
       setEmotionLog(updatedLog)
       setEditingEntryIndex(null)
@@ -314,6 +332,7 @@ export default function EmotionTracker() {
         timestamp: new Date().toISOString(),
         path: currentDragPath.length > 1 ? [...currentDragPath] : undefined,
         notes: emotionNotes, // Add notes
+        collection: activeCollection, // Add collection
       }
       setEmotionLog((prev) => [newEntry, ...prev])
     }
@@ -332,6 +351,7 @@ export default function EmotionTracker() {
     editingEntryIndex,
     resetSelection,
     emotionNotes,
+    activeCollection, // Add to dependency array
   ])
 
   // Handle editing an existing entry
@@ -474,12 +494,135 @@ export default function EmotionTracker() {
     if (savedLog.length > 0) {
       setEmotionLog(savedLog);
     }
+    
+    const savedCollections = loadFromLocalStorage<{id: string, name: string}[]>(
+      'emotion-collections', 
+      [{id: 'default', name: 'Default Collection'}]
+    );
+    setCollections(savedCollections);
+    
+    const savedTags = loadFromLocalStorage<string[]>('emotion-tags', []);
+    setTags(savedTags);
+    
+    const savedEntryTags = loadFromLocalStorage<{[key: string]: string[]}>('emotion-entry-tags', {});
+    setEntryTags(savedEntryTags);
+    
+    const savedActiveCollection = loadFromLocalStorage<string>('emotion-active-collection', 'default');
+    setActiveCollection(savedActiveCollection);
   }, []);
   
   // Save data to localStorage when emotionLog changes
   useEffect(() => {
     saveToLocalStorage('emotion-log', emotionLog);
-  }, [emotionLog]);
+    saveToLocalStorage('emotion-collections', collections);
+    saveToLocalStorage('emotion-tags', tags);
+    saveToLocalStorage('emotion-entry-tags', entryTags);
+    saveToLocalStorage('emotion-active-collection', activeCollection);
+  }, [emotionLog, collections, tags, entryTags, activeCollection]);
+
+  // Function to handle importing data
+  const handleImportData = useCallback((importedData: string) => {
+    try {
+      const data = JSON.parse(importedData) as EmotionLogEntry[];
+      
+      // Save current log for undo
+      setUndoStack((prev) => [...prev, [...emotionLog]]);
+      
+      // Add the imported entries to the current log
+      setEmotionLog((prev) => {
+        // Merge entries, avoid duplicates based on timestamp
+        const existingTimestamps = new Set(prev.map(entry => entry.timestamp));
+        const newEntries = data.filter(entry => !existingTimestamps.has(entry.timestamp));
+        return [...newEntries, ...prev];
+      });
+      
+      // Extract and add any new tags
+      const importedTags = data.reduce<string[]>((acc, entry) => {
+        if (entry.tags && Array.isArray(entry.tags)) {
+          entry.tags.forEach(tag => {
+            if (!acc.includes(tag) && !tags.includes(tag)) {
+              acc.push(tag);
+            }
+          });
+        }
+        return acc;
+      }, []);
+      
+      setTags(prev => [...prev, ...importedTags]);
+      
+      // Update tag mapping for entries
+      const newEntryTags = {...entryTags};
+      data.forEach(entry => {
+        if (entry.tags && entry.timestamp) {
+          newEntryTags[entry.timestamp] = entry.tags;
+        }
+      });
+      setEntryTags(newEntryTags);
+      
+      setShowImportDialog(false);
+    } catch (error) {
+      console.error("Failed to import data:", error);
+      alert("Failed to import data. Please ensure it's valid JSON.");
+    }
+  }, [emotionLog, tags, entryTags]);
+  
+  // Function to add tags to an entry
+  const addTagToEntry = useCallback((entryIndex: number, tag: string) => {
+    const entry = emotionLog[entryIndex];
+    if (!entry) return;
+    
+    // Add tag to tags list if not present
+    if (!tags.includes(tag)) {
+      setTags(prev => [...prev, tag]);
+    }
+    
+    // Add tag to entry
+    setEntryTags(prev => {
+      const newTags = prev[entry.timestamp] || [];
+      if (!newTags.includes(tag)) {
+        return {
+          ...prev,
+          [entry.timestamp]: [...newTags, tag]
+        };
+      }
+      return prev;
+    });
+  }, [emotionLog, tags]);
+  
+  // Function to create a new collection
+  const createCollection = useCallback(() => {
+    if (!newCollectionName.trim()) return;
+    
+    const collectionId = `col-${Date.now()}`;
+    setCollections(prev => [
+      ...prev,
+      {id: collectionId, name: newCollectionName}
+    ]);
+    setNewCollectionName('');
+    setShowCollectionDialog(false);
+  }, [newCollectionName]);
+  
+  // Filter logs based on search and tags
+  const filteredEmotionLog = useCallback(() => {
+    return emotionLog.filter(entry => {
+      // Filter by search query
+      const matchesSearch = !searchQuery || 
+        entry.emotion.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (entry.notes && entry.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Filter by selected tags
+      const entryTagsList = entryTags[entry.timestamp] || [];
+      const matchesTags = selectedTags.length === 0 || 
+        selectedTags.some(tag => entryTagsList.includes(tag));
+      
+      // Filter by collection
+      const matchesCollection = !entry.collection || 
+        entry.collection === activeCollection || 
+        activeCollection === 'default';
+      
+      return matchesSearch && matchesTags && matchesCollection;
+    });
+  }, [emotionLog, searchQuery, selectedTags, entryTags, activeCollection]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 font-sans">
@@ -497,7 +640,7 @@ export default function EmotionTracker() {
               Circumplex Model
             </TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
-              Emotion History
+              Emotion Memory Bank
             </TabsTrigger>
             <TabsTrigger value="insights" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
               Scientific Insights
@@ -754,61 +897,208 @@ export default function EmotionTracker() {
                 <CardTitle className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <HistoryIcon className="w-5 h-5 text-indigo-600" />
-                    Emotion Log
+                    Emotion Memory Bank
                   </span>
-                  <Badge variant="outline" className="px-3 py-1">
-                    {emotionLog.length} entries
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 gap-1">
+                          <FolderIcon className="h-4 w-4" />
+                          {collections.find(c => c.id === activeCollection)?.name || 'Default'}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {collections.map(collection => (
+                          <DropdownMenuItem 
+                            key={collection.id} 
+                            onClick={() => setActiveCollection(collection.id)}
+                            className="cursor-pointer"
+                          >
+                            {collection.name}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuItem 
+                          onClick={() => setShowCollectionDialog(true)}
+                          className="cursor-pointer border-t mt-1 pt-1"
+                        >
+                          ➕ New Collection
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <Badge variant="outline" className="px-3 py-1">
+                      {filteredEmotionLog().length} entries
+                    </Badge>
+                  </div>
                 </CardTitle>
+                
+                <div className="flex flex-col md:flex-row gap-2 mt-2">
+                  <div className="relative flex-grow">
+                    <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Search emotions or notes..."
+                      className="w-full bg-white rounded-md border border-gray-200 pl-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {tags.length > 0 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-9 gap-1">
+                            <TagIcon className="h-4 w-4" />
+                            Tags
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {tags.map(tag => (
+                            <DropdownMenuItem 
+                              key={tag}
+                              onClick={() => setSelectedTags(prev => 
+                                prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                              )}
+                              className="cursor-pointer"
+                            >
+                              <input 
+                                type="checkbox" 
+                                checked={selectedTags.includes(tag)} 
+                                readOnly 
+                                className="mr-2"
+                              />
+                              {tag}
+                            </DropdownMenuItem>
+                          ))}
+                          {selectedTags.length > 0 && (
+                            <DropdownMenuItem 
+                              onClick={() => setSelectedTags([])}
+                              className="cursor-pointer border-t mt-1 pt-1"
+                            >
+                              Clear selection
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-1"
+                      onClick={() => setShowImportDialog(true)}
+                    >
+                      <UploadIcon className="h-4 w-4" />
+                      Import
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-9 gap-1">
+                          <SaveIcon className="h-4 w-4" />
+                          Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => exportLog('json')} className="cursor-pointer">
+                          <FileJsonIcon className="w-3.5 h-3.5 mr-2" />
+                          <span>Export as JSON</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => exportLog('csv')} className="cursor-pointer">
+                          <FileTextIcon className="w-3.5 h-3.5 mr-2" />
+                          <span>Export as CSV</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
               </CardHeader>
+              
               <CardContent className="p-6">
                 {emotionLog.length > 0 ? (
                   <ScrollArea className="h-[400px] pr-4">
                     <div className="space-y-4">
-                      {emotionLog.map((entry, index) => (
-                        <div key={index} className="relative group">
-                          <EmotionLogItem entry={entry} getEmotionColor={getEmotionColor} />
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 bg-white/80 hover:bg-white"
-                                    onClick={() => startEditEntry(index)}
-                                  >
-                                    <EditIcon className="h-3.5 w-3.5 text-indigo-600" />
-                                    <span className="sr-only">Edit</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Edit this entry</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                      {filteredEmotionLog().map((entry, index) => {
+                        const originalIndex = emotionLog.findIndex(e => e.timestamp === entry.timestamp);
+                        return (
+                          <div key={entry.timestamp} className="relative group">
+                            <EmotionLogItem entry={entry} getEmotionColor={getEmotionColor} />
+                            
+                            {/* Render tags if they exist */}
+                            {entryTags[entry.timestamp]?.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {entryTags[entry.timestamp].map(tag => (
+                                  <Badge key={tag} variant="secondary" className="text-xs">
+                                    #{tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      onClick={() => {
+                                        const tagName = prompt("Add tag to this entry:");
+                                        if (tagName && tagName.trim()) {
+                                          addTagToEntry(originalIndex, tagName.trim());
+                                        }
+                                      }}
+                                    >
+                                      <TagIcon className="h-3.5 w-3.5 text-indigo-600" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Add tag</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      onClick={() => startEditEntry(originalIndex)}
+                                    >
+                                      <EditIcon className="h-3.5 w-3.5 text-indigo-600" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit this entry</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
 
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 bg-white/80 hover:bg-white"
-                                    onClick={() => deleteEntry(index)}
-                                  >
-                                    <TrashIcon className="h-3.5 w-3.5 text-red-500" />
-                                    <span className="sr-only">Delete</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Delete this entry</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      onClick={() => deleteEntry(originalIndex)}
+                                    >
+                                      <TrashIcon className="h-3.5 w-3.5 text-red-500" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete this entry</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 ) : (
@@ -1070,6 +1360,75 @@ export default function EmotionTracker() {
           </div>
           <DialogFooter>
             <Button onClick={() => setShowHelp(false)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Emotion Data</DialogTitle>
+            <DialogDescription>
+              Paste previously exported JSON data to import your emotion logs.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <textarea
+              className="w-full min-h-[200px] p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Paste JSON data here..."
+              id="importData"
+            />
+          </div>
+          <DialogFooter className="sm:justify-between mt-4">
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                const importData = (document.getElementById('importData') as HTMLTextAreaElement).value;
+                handleImportData(importData);
+              }} 
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              Import Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Collection Dialog */}
+      <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Collection</DialogTitle>
+            <DialogDescription>
+              Collections help you organize different sets of emotion logs.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <label htmlFor="collection-name" className="block text-sm font-medium text-gray-700 mb-1">
+              Collection Name
+            </label>
+            <input
+              id="collection-name"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter collection name..."
+              value={newCollectionName}
+              onChange={(e) => setNewCollectionName(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="sm:justify-between mt-4">
+            <Button variant="outline" onClick={() => setShowCollectionDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={createCollection} 
+              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={!newCollectionName.trim()}
+            >
+              Create Collection
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -19,6 +19,8 @@ export interface EmotionLogEntry {
   timestamp: string
   path?: { x: number; y: number }[]
   notes?: string // Add notes field
+  collection?: string
+  tags?: string[]
 }
 
 interface EmotionLogItemProps {
