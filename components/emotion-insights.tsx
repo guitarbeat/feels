@@ -1,53 +1,44 @@
 "use client"
 
-import { useMemo } from "react"
-import type { EmotionLogEntry } from "@/components/emotion-log-item"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "@/components/ui/chart"
-import { format } from "date-fns"
+import { useMemo, useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { type EmotionLogEntry } from "@/components/emotion-log-item"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts"
 
 interface EmotionInsightsProps {
   emotionLog: EmotionLogEntry[]
 }
 
+// Recharts helper for tooltip formatting
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 shadow-md border border-gray-200 dark:border-gray-700 rounded-md">
+        <p className="font-medium text-sm">{`${label} : ${payload[0].value}`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function EmotionInsights({ emotionLog }: EmotionInsightsProps) {
-  // Group emotions by quadrant with CORRECTED quadrant names
-  const quadrantData = useMemo(() => {
-    const quadrants = {
-      "Positive Active": { count: 0, emotions: new Set(), color: "#EAB308", emoji: "🤩" }, // yellow-500
-      "Negative Active": { count: 0, emotions: new Set(), color: "#EF4444", emoji: "😠" }, // red-500
-      "Negative Inactive": { count: 0, emotions: new Set(), color: "#3B82F6", emoji: "😢" }, // blue-500
-      "Positive Inactive": { count: 0, emotions: new Set(), color: "#22C55E", emoji: "😌" }, // green-500
-    }
+  const [chartTab, setChartTab] = useState("emotions")
 
+  // Count occurrences of each emotion
+  const emotionFrequency = useMemo(() => {
+    const counts: Record<string, number> = {}
     emotionLog.forEach((entry) => {
-      if (entry.valence >= 0 && entry.arousal >= 0) {
-        quadrants["Positive Active"].count++
-        quadrants["Positive Active"].emotions.add(entry.emotion)
-      } else if (entry.valence < 0 && entry.arousal >= 0) {
-        quadrants["Negative Active"].count++
-        quadrants["Negative Active"].emotions.add(entry.emotion)
-      } else if (entry.valence < 0 && entry.arousal < 0) {
-        quadrants["Negative Inactive"].count++
-        quadrants["Negative Inactive"].emotions.add(entry.emotion)
-      } else {
-        quadrants["Positive Inactive"].count++
-        quadrants["Positive Inactive"].emotions.add(entry.emotion)
-      }
+      counts[entry.emotion] = (counts[entry.emotion] || 0) + 1
     })
-
-    return Object.entries(quadrants).map(([name, data]) => ({
-      name,
-      value: data.count,
-      emotions: Array.from(data.emotions),
-      color: data.color,
-      emoji: data.emoji,
-    }))
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
   }, [emotionLog])
 
-  // Calculate average valence and arousal
-  const averages = useMemo(() => {
+  // Get average valence and arousal over time
+  const averageMetrics = useMemo(() => {
     if (emotionLog.length === 0) return { valence: 0, arousal: 0 }
-
     const sum = emotionLog.reduce(
       (acc, entry) => {
         return {
@@ -55,193 +46,182 @@ export function EmotionInsights({ emotionLog }: EmotionInsightsProps) {
           arousal: acc.arousal + entry.arousal,
         }
       },
-      { valence: 0, arousal: 0 },
+      { valence: 0, arousal: 0 }
     )
-
     return {
-      valence: Number.parseFloat((sum.valence / emotionLog.length).toFixed(2)),
-      arousal: Number.parseFloat((sum.arousal / emotionLog.length).toFixed(2)),
+      valence: Number((sum.valence / emotionLog.length).toFixed(2)),
+      arousal: Number((sum.arousal / emotionLog.length).toFixed(2)),
     }
   }, [emotionLog])
 
-  // Get most frequent emotions
-  const topEmotions = useMemo(() => {
-    const counts: Record<string, number> = {}
+  // Calculate emotion distribution by quadrant
+  const quadrantData = useMemo(() => {
+    const quadrants: Record<string, number> = {
+      "Excited (Q1)": 0,
+      "Angry (Q2)": 0,
+      "Sad (Q3)": 0,
+      "Relaxed (Q4)": 0,
+    }
+
     emotionLog.forEach((entry) => {
-      counts[entry.emotion] = (counts[entry.emotion] || 0) + 1
+      if (entry.valence >= 0 && entry.arousal >= 0) quadrants["Excited (Q1)"]++
+      else if (entry.valence < 0 && entry.arousal >= 0) quadrants["Angry (Q2)"]++
+      else if (entry.valence < 0 && entry.arousal < 0) quadrants["Sad (Q3)"]++
+      else quadrants["Relaxed (Q4)"]++
     })
 
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([emotion, count]) => ({
-        emotion,
-        count,
-        emoji: emotionLog.find((entry) => entry.emotion === emotion)?.emoji || "",
-      }))
+    return Object.entries(quadrants).map(([name, value]) => ({ name, value }))
   }, [emotionLog])
 
-  // Get scientific insight based on data
-  const getInsight = useMemo(() => {
-    if (emotionLog.length < 3) return "Log more emotions to receive personalized insights."
-
-    const dominantQuadrant = quadrantData.reduce((max, item) => (item.value > max.value ? item : max), quadrantData[0])
-
-    if (dominantQuadrant.name === "Positive Active") {
-      return "Your emotions tend toward the positive-active quadrant, suggesting an energetic, optimistic state. Research shows this state can enhance creativity and problem-solving abilities."
-    } else if (dominantQuadrant.name === "Negative Active") {
-      return "Your emotions frequently fall in the negative-active quadrant, indicating heightened stress or anxiety. Studies suggest mindfulness practices may help regulate these high-arousal negative states."
-    } else if (dominantQuadrant.name === "Negative Inactive") {
-      return "Your emotions often register in the negative-inactive quadrant, which may indicate low energy combined with negative feelings. Research suggests physical activity and social connection can help shift from this state."
-    } else {
-      return "Your emotions predominantly fall in the positive-inactive quadrant, suggesting a calm, content state. This state is associated with better recovery and improved long-term decision making."
-    }
-  }, [emotionLog, quadrantData])
-
-  // Helper function to determine emotion color based on valence and arousal
-  const getEmotionColor = (valence: number, arousal: number): string => {
-    if (valence >= 0 && arousal >= 0) return "bg-yellow-500" // Happy/Excited
-    if (valence < 0 && arousal >= 0) return "bg-red-500" // Angry/Tense
-    if (valence < 0 && arousal < 0) return "bg-blue-500" // Sad/Depressed
-    return "bg-green-500" // Calm/Relaxed
-  }
-
-  // Find entries with notes for additional insights
-  const entriesWithNotes = useMemo(() => {
-    return emotionLog.filter((entry) => entry.notes && entry.notes.trim().length > 0).slice(0, 3) // Show only the 3 most recent entries with notes
-  }, [emotionLog])
-
-  if (emotionLog.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500">
-        <p>Log some emotions to see your personalized insights</p>
-      </div>
-    )
-  }
+  // Colors for the different charts
+  const COLORS = ["#6366f1", "#8b5cf6", "#d946ef", "#ec4899"]
+  const QUADRANT_COLORS = ["#eab308", "#ef4444", "#3b82f6", "#10b981"]
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h3 className="font-medium mb-3 text-lg text-indigo-800">Your Emotion Summary</h3>
-        <p className="text-sm text-gray-600 mb-4">{getInsight}</p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-gray-50/70 p-4 rounded-lg border border-gray-100">
-            <h4 className="text-sm font-medium mb-3 text-indigo-700">Emotion Distribution</h4>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={quadrantData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={70}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {quadrantData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value, name) => [`${value} entries`, name]}
-                    contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs mt-3">
-              {quadrantData.map((entry, index) => (
-                <div key={index} className="flex items-center gap-1 bg-white p-1.5 rounded-md shadow-sm">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
-                  <span className="text-sm">
-                    {entry.emoji} {entry.name}
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        <Card className="flex-1 shadow-sm border border-gray-100 dark:border-gray-700">
+          <CardContent className="p-4">
+            <h3 className="text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-2">Average Emotional State</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Average Valence</p>
+                <div className="flex items-end justify-between">
+                  <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{averageMetrics.valence}</p>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {averageMetrics.valence >= 0 ? "Positive" : "Negative"}
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-gray-50/70 p-4 rounded-lg border border-gray-100">
-              <h4 className="text-sm font-medium mb-2 text-indigo-700">Most Frequent Emotions</h4>
-              <div className="space-y-2">
-                {topEmotions.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between bg-white p-2.5 rounded-md shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{item.emoji}</span>
-                      <span className="font-medium">{item.emotion}</span>
-                    </div>
-                    <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
-                      {item.count} times
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-gray-50/70 p-4 rounded-lg border border-gray-100">
-              <h4 className="text-sm font-medium mb-2 text-indigo-700">Average Position</h4>
-              <div className="bg-white p-3 rounded-md shadow-sm">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-gray-500 text-xs">Avg. Valence:</span>
-                    <p className="font-medium">{averages.valence}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 text-xs">Avg. Arousal:</span>
-                    <p className="font-medium">{averages.arousal}</p>
-                  </div>
-                </div>
-                <div className="relative w-full h-[80px] mt-3 border border-gray-200 rounded-md overflow-hidden bg-gradient-to-br from-gray-50 to-white">
-                  {/* Quadrant backgrounds */}
-                  <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-yellow-100/30"></div>
-                  <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-red-100/30"></div>
-                  <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-blue-100/30"></div>
-                  <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-green-100/30"></div>
-
-                  {/* Axes */}
-                  <div className="absolute left-0 right-0 top-1/2 h-px bg-gray-300"></div>
-                  <div className="absolute top-0 bottom-0 left-1/2 w-px bg-gray-300"></div>
-
-                  {/* Average position marker */}
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
                   <div
-                    className="absolute w-5 h-5 bg-indigo-600 rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-md border-2 border-white"
+                    className={`h-1 rounded-full ${
+                      averageMetrics.valence >= 0 ? "bg-green-500" : "bg-red-500"
+                    }`}
                     style={{
-                      left: `${(averages.valence + 1) * 50}%`,
-                      top: `${(1 - averages.arousal) * 50}%`,
+                      width: `${Math.abs(averageMetrics.valence) * 50 + 50}%`,
+                      marginLeft: averageMetrics.valence < 0 ? 0 : "50%",
+                      transform: averageMetrics.valence < 0 ? "translateX(-100%)" : "translateX(-100%)",
+                      maxWidth: "50%",
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Average Arousal</p>
+                <div className="flex items-end justify-between">
+                  <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{averageMetrics.arousal}</p>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {averageMetrics.arousal >= 0 ? "Activated" : "Deactivated"}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+                  <div
+                    className={`h-1 rounded-full ${
+                      averageMetrics.arousal >= 0 ? "bg-yellow-500" : "bg-blue-500"
+                    }`}
+                    style={{
+                      width: `${Math.abs(averageMetrics.arousal) * 50 + 50}%`,
+                      marginLeft: averageMetrics.arousal < 0 ? 0 : "50%",
+                      transform: averageMetrics.arousal < 0 ? "translateX(-100%)" : "translateX(-100%)",
+                      maxWidth: "50%",
                     }}
                   ></div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card className="flex-1 shadow-sm border border-gray-100 dark:border-gray-700">
+          <CardContent className="p-4">
+            <h3 className="text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-2">Emotion Distribution</h3>
+            <div className="h-32 md:h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={quadrantData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={60}
+                    paddingAngle={2}
+                    label
+                  >
+                    {quadrantData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={QUADRANT_COLORS[index % QUADRANT_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Display recent entries with notes */}
-      {entriesWithNotes.length > 0 && (
-        <div className="mt-6 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <h3 className="font-medium mb-3 text-lg text-indigo-800">Recent Emotion Notes</h3>
-          <div className="space-y-4">
-            {entriesWithNotes.map((entry, index) => (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-3 h-3 rounded-full ${getEmotionColor(entry.valence, entry.arousal)}`}></div>
-                  <h4 className="font-medium flex items-center gap-1">
-                    <span className="text-lg">{entry.emoji}</span> {entry.emotion}
-                  </h4>
-                  <span className="text-xs text-gray-500 ml-auto">
-                    {format(new Date(entry.timestamp), "MMM d, h:mm a")}
-                  </span>
+      <Card className="shadow-sm border border-gray-100 dark:border-gray-700">
+        <CardContent className="pt-4 px-0 pb-0">
+          <div className="px-4">
+            <h3 className="text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-2">Emotional Patterns</h3>
+            <Tabs value={chartTab} onValueChange={setChartTab} className="w-full">
+              <TabsList className="mb-2 bg-indigo-50/70 dark:bg-indigo-900/30">
+                <TabsTrigger value="emotions" className="text-xs">
+                  Emotion Frequency
+                </TabsTrigger>
+                <TabsTrigger value="quadrants" className="text-xs">
+                  Quadrant Analysis
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="emotions" className="mt-0">
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={emotionFrequency.slice(0, 10)} // Top 10 emotions
+                      margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        height={60}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="value" fill="#6366f1">
+                        {emotionFrequency.slice(0, 10).map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{entry.notes}</p>
-              </div>
-            ))}
+              </TabsContent>
+
+              <TabsContent value="quadrants" className="mt-0">
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={quadrantData} margin={{ top: 5, right: 30, left: 20, bottom: 30 }}>
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} />
+                      <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="value" fill="#6366f1">
+                        {quadrantData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={QUADRANT_COLORS[index % QUADRANT_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

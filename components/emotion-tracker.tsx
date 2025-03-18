@@ -20,6 +20,8 @@ import {
   FolderIcon,
   SearchIcon,
   UploadIcon,
+  MoonIcon,
+  SunIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -57,6 +59,8 @@ import { type EmotionLogEntry, EmotionLogItem } from "@/components/emotion-log-i
 import { EmotionInsights } from "@/components/emotion-insights"
 import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage'
 import { exportEmotionData, ExportFormat } from '@/lib/exporters'
+import { useTheme } from "@/components/theme-provider"
+import { ThemeToggle } from "@/components/ui/toggle-theme"
 
 export default function EmotionTracker() {
   const [markerPosition, setMarkerPosition] = useState({ x: 0.5, y: 0.5 }) // Normalized 0-1 values
@@ -96,6 +100,8 @@ export default function EmotionTracker() {
   const [tags, setTags] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [entryTags, setEntryTags] = useState<{[entryTimestamp: string]: string[]}>({});
+
+  const { theme, setTheme } = useTheme()
 
   // Calculate valence and arousal from normalized position
   const getValenceArousal = useCallback((x: number, y: number) => {
@@ -625,31 +631,34 @@ export default function EmotionTracker() {
   }, [emotionLog, searchQuery, selectedTags, entryTags, activeCollection]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 font-sans">
-      <h1 className="text-3xl font-bold text-indigo-800 mb-4 md:mb-6 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-          <span className="text-xl text-indigo-600">😊</span>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950 p-4 md:p-8 font-sans">
+      <h1 className="text-3xl font-bold text-indigo-800 dark:text-indigo-300 mb-4 md:mb-6 flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+          <span className="text-xl text-indigo-600 dark:text-indigo-400">😊</span>
         </div>
         Emotion Tracker
+        <div className="ml-auto">
+          <ThemeToggle variant="ghost" />
+        </div>
       </h1>
 
       <div className="w-full max-w-4xl">
         <Tabs defaultValue="circumplex" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 rounded-xl overflow-hidden bg-indigo-50/50 p-1">
-            <TabsTrigger value="circumplex" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 mb-4 rounded-xl overflow-hidden bg-indigo-50/50 dark:bg-indigo-950/50 p-1">
+            <TabsTrigger value="circumplex" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-md rounded-lg">
               Circumplex Model
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+            <TabsTrigger value="history" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-md rounded-lg">
               Emotion Memory Bank
             </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+            <TabsTrigger value="insights" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-md rounded-lg">
               Scientific Insights
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="circumplex">
-            <Card className="overflow-hidden border-0 shadow-lg rounded-xl bg-white">
-              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50/60 to-purple-50/60 border-b border-gray-100">
+            <Card className="overflow-hidden border-0 shadow-lg rounded-xl bg-white dark:bg-gray-800">
+              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50/60 to-purple-50/60 dark:from-indigo-950/60 dark:to-purple-950/60 border-b border-gray-100 dark:border-gray-700">
                 <CardTitle className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <InfoIcon className="w-5 h-5 text-indigo-600" />
@@ -742,15 +751,15 @@ export default function EmotionTracker() {
                       {(recordingMode === "start-selected" ||
                         recordingMode === "recording" ||
                         recordingMode === "completed") && (
-                        <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
-                          <h3 className="text-sm font-medium text-gray-500 mb-2">Starting Emotion</h3>
+                        <div className="p-3 bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600">
+                          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Starting Emotion</h3>
                           <div className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded-full ${startEmotionColor}`}></div>
-                            <p className="text-base font-medium text-gray-700 flex items-center gap-1">
+                            <p className="text-base font-medium text-gray-700 dark:text-gray-200 flex items-center gap-1">
                               <span className="text-xl">{startEmotionData.emoji}</span> {startEmotionData.label}
                             </p>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 mt-1 text-xs text-gray-500">
+                          <div className="grid grid-cols-2 gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
                             <div>Valence: {startVA.valence}</div>
                             <div>Arousal: {startVA.arousal}</div>
                           </div>
@@ -758,33 +767,33 @@ export default function EmotionTracker() {
                       )}
 
                       {/* Current/End Emotion */}
-                      <div className="p-3 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-lg border border-gray-100 shadow-sm">
-                        <h3 className="text-sm font-medium text-gray-500 mb-2">Current Emotion</h3>
+                      <div className="p-3 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Current Emotion</h3>
                         <div className="flex items-center gap-2 mb-2">
                           <div className={`w-4 h-4 rounded-full ${emotionColor}`}></div>
-                          <p className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+                          <p className="text-xl font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
                             <span className="text-2xl">{currentEmoji}</span> {currentEmotion}
                           </p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 mt-3">
-                          <div className="bg-white shadow-sm p-2 rounded-md">
-                            <p className="text-xs text-gray-500 mb-1">Valence</p>
-                            <p className="text-lg font-medium">{valence}</p>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div className="bg-white dark:bg-gray-700 shadow-sm p-2 rounded-md">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valence</p>
+                            <p className="text-lg font-medium dark:text-gray-200">{valence}</p>
+                            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mt-1">
                               <div
-                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                className="bg-indigo-600 dark:bg-indigo-500 h-1.5 rounded-full transition-all duration-300"
                                 style={{ width: `${(valence + 1) * 50}%` }}
                               ></div>
                             </div>
                           </div>
 
-                          <div className="bg-white shadow-sm p-2 rounded-md">
-                            <p className="text-xs text-gray-500 mb-1">Arousal</p>
-                            <p className="text-lg font-medium">{arousal}</p>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div className="bg-white dark:bg-gray-700 shadow-sm p-2 rounded-md">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Arousal</p>
+                            <p className="text-lg font-medium dark:text-gray-200">{arousal}</p>
+                            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mt-1">
                               <div
-                                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                                className="bg-indigo-600 dark:bg-indigo-500 h-1.5 rounded-full transition-all duration-300"
                                 style={{ width: `${(arousal + 1) * 50}%` }}
                               ></div>
                             </div>
@@ -878,8 +887,8 @@ export default function EmotionTracker() {
                 </div>
               </CardContent>
               
-              <CardFooter className="bg-gray-50 px-6 py-3 border-t border-gray-100">
-                <div className="text-xs text-gray-500 flex items-center gap-2">
+              <CardFooter className="bg-gray-50 dark:bg-gray-800/80 px-6 py-3 border-t border-gray-100 dark:border-gray-700">
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <InfoIcon className="h-3 w-3" />
                   {recordingMode === "recording"
                     ? `Recording in progress: ${currentDragPath.length} points captured`
@@ -892,8 +901,8 @@ export default function EmotionTracker() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">
-            <Card className="overflow-hidden border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+            <Card className="overflow-hidden border-0 shadow-lg dark:bg-gray-800">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950">
                 <CardTitle className="flex justify-between items-center">
                   <span className="flex items-center gap-2">
                     <HistoryIcon className="w-5 h-5 text-indigo-600" />
@@ -934,11 +943,11 @@ export default function EmotionTracker() {
                 
                 <div className="flex flex-col md:flex-row gap-2 mt-2">
                   <div className="relative flex-grow">
-                    <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search emotions or notes..."
-                      className="w-full bg-white rounded-md border border-gray-200 pl-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 pl-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-gray-200 dark:placeholder-gray-400"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -1006,7 +1015,7 @@ export default function EmotionTracker() {
                           <span>Export as JSON</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportLog('csv')} className="cursor-pointer">
-                          <FileTextIcon className="w-3.5 h-3.5 mr-2" />
+                          <FileTextIcon class="w-3.5 h-3.5 mr-2" />
                           <span>Export as CSV</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -1015,7 +1024,7 @@ export default function EmotionTracker() {
                 </div>
               </CardHeader>
               
-              <CardContent className="p-6">
+              <CardContent className="p-6 dark:bg-gray-800">
                 {emotionLog.length > 0 ? (
                   <ScrollArea className="h-[400px] pr-4">
                     <div className="space-y-4">
@@ -1029,7 +1038,7 @@ export default function EmotionTracker() {
                             {entryTags[entry.timestamp]?.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1">
                                 {entryTags[entry.timestamp].map(tag => (
-                                  <Badge key={tag} variant="secondary" className="text-xs">
+                                  <Badge key={tag} variant="secondary" className="text-xs dark:bg-gray-700 dark:text-gray-300">
                                     #{tag}
                                   </Badge>
                                 ))}
@@ -1043,7 +1052,7 @@ export default function EmotionTracker() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white dark:bg-gray-700/80 dark:hover:bg-gray-700"
                                       onClick={() => {
                                         const tagName = prompt("Add tag to this entry:");
                                         if (tagName && tagName.trim()) {
@@ -1066,7 +1075,7 @@ export default function EmotionTracker() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white dark:bg-gray-700/80 dark:hover:bg-gray-700"
                                       onClick={() => startEditEntry(originalIndex)}
                                     >
                                       <EditIcon className="h-3.5 w-3.5 text-indigo-600" />
@@ -1084,7 +1093,7 @@ export default function EmotionTracker() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-7 w-7 bg-white/80 hover:bg-white"
+                                      className="h-7 w-7 bg-white/80 hover:bg-white dark:bg-gray-700/80 dark:hover:bg-gray-700"
                                       onClick={() => deleteEntry(originalIndex)}
                                     >
                                       <TrashIcon className="h-3.5 w-3.5 text-red-500" />
@@ -1102,7 +1111,7 @@ export default function EmotionTracker() {
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                     <HistoryIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>No emotions logged yet</p>
                     <p className="text-sm">Use the Circumplex Model tab to track your emotions</p>
@@ -1113,17 +1122,17 @@ export default function EmotionTracker() {
           </TabsContent>
 
           <TabsContent value="insights" className="mt-4">
-            <Card className="overflow-hidden border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                <CardTitle className="flex items-center gap-2">
-                  <InfoIcon className="w-5 h-5 text-indigo-600" />
+            <Card className="overflow-hidden border-0 shadow-lg dark:bg-gray-800">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950">
+                <CardTitle className="flex items-center gap-2 dark:text-gray-200">
+                  <InfoIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   Emotion Science
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6 p-6">
+              <CardContent className="space-y-6 p-6 dark:bg-gray-800">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-indigo-800">The Circumplex Model of Affect</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-lg font-semibold text-indigo-800 dark:text-indigo-300">The Circumplex Model of Affect</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     The Circumplex Model, developed by psychologist James Russell in 1980, organizes emotions in a
                     two-dimensional circular space, using dimensions of valence (pleasure-displeasure) and arousal
                     (activation-deactivation). This model helps visualize how emotions relate to one another and
@@ -1134,11 +1143,11 @@ export default function EmotionTracker() {
                 {emotionLog.length > 0 && <EmotionInsights emotionLog={emotionLog} />}
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-indigo-50 p-4 rounded-lg shadow-sm">
-                    <h3 className="font-medium flex items-center gap-2 mb-2 text-indigo-800">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/40 p-4 rounded-lg shadow-sm">
+                    <h3 className="font-medium flex items-center gap-2 mb-2 text-indigo-800 dark:text-indigo-300">
                       <span className="text-xl">🧠</span> Valence Dimension
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Valence refers to how pleasant or unpleasant an emotion feels. Positive valence emotions (right
                       side) like joy and contentment feel good, while negative valence emotions (left side) like fear
                       and sadness feel bad. Research shows valence strongly influences decision-making and memory
@@ -1146,11 +1155,11 @@ export default function EmotionTracker() {
                     </p>
                   </div>
 
-                  <div className="bg-indigo-50 p-4 rounded-lg shadow-sm">
-                    <h3 className="font-medium flex items-center gap-2 mb-2 text-indigo-800">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/40 p-4 rounded-lg shadow-sm">
+                    <h3 className="font-medium flex items-center gap-2 mb-2 text-indigo-800 dark:text-indigo-300">
                       <span className="text-xl">⚡</span> Arousal Dimension
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Arousal refers to the intensity or energy level of an emotion. High arousal emotions (top) like
                       excitement and anger involve physiological activation, while low arousal emotions (bottom) like
                       calmness and depression involve deactivation. Arousal affects attention, focus, and physical
@@ -1159,30 +1168,30 @@ export default function EmotionTracker() {
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="font-medium mb-3 text-indigo-800">Emotional Regulation Strategies</h3>
-                  <ul className="text-sm text-gray-600 space-y-3">
-                    <li className="flex items-start gap-2 bg-gray-50 p-2 rounded-md">
+                <div className="bg-white dark:bg-gray-900 p-5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                  <h3 className="font-medium mb-3 text-indigo-800 dark:text-indigo-300">Emotional Regulation Strategies</h3>
+                  <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-3">
+                    <li className="flex items-start gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
                       <span className="text-lg">🧘</span>
                       <span>
                         <strong>Mindfulness:</strong> Observing emotions without judgment can help reduce their
                         intensity.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 bg-gray-50 p-2 rounded-md">
+                    <li className="flex items-start gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
                       <span className="text-lg">🔄</span>
                       <span>
                         <strong>Cognitive reappraisal:</strong> Changing how you think about a situation can change how
                         you feel about it.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 bg-gray-50 p-2 rounded-md">
+                    <li className="flex items-start gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
                       <span className="text-lg">🏃</span>
                       <span>
                         <strong>Physical activity:</strong> Exercise can help regulate both high and low arousal states.
                       </span>
                     </li>
-                    <li className="flex items-start gap-2 bg-gray-50 p-2 rounded-md">
+                    <li className="flex items-start gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-md">
                       <span className="text-lg">🗣️</span>
                       <span>
                         <strong>Social connection:</strong> Sharing emotions with others can help process and regulate
@@ -1199,10 +1208,10 @@ export default function EmotionTracker() {
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle>{editingEntryIndex !== null ? "Save Changes?" : "Log This Emotion?"}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-gray-400">
               {editingEntryIndex !== null
                 ? "Are you sure you want to save these changes to your emotion log?"
                 : recordingMode === "completed"
@@ -1210,7 +1219,7 @@ export default function EmotionTracker() {
                   : "Are you sure you want to add this emotion to your log?"}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
             {recordingMode === "completed" || recordingMode === "recording" ? (
               <div className="w-full">
                 <div className="flex items-center mb-3">
@@ -1233,7 +1242,7 @@ export default function EmotionTracker() {
                     <span className="text-sm">{currentEmoji}</span>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Path with {currentDragPath.length} points from {startEmotionData.label} ({startVA.valence},{" "}
                   {startVA.arousal}) to {currentEmotion} ({valence}, {arousal})
                 </p>
@@ -1247,7 +1256,7 @@ export default function EmotionTracker() {
                 </div>
                 <div>
                   <p className="font-medium">{currentEmotion}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Valence: {valence}, Arousal: {arousal}
                   </p>
                 </div>
@@ -1257,12 +1266,12 @@ export default function EmotionTracker() {
 
           {/* Add notes textarea */}
           <div className="mt-4">
-            <label htmlFor="emotion-notes" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="emotion-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Notes (optional)
             </label>
             <textarea
               id="emotion-notes"
-              className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full min-h-[100px] p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Add context or details about this emotional state..."
               value={emotionNotes}
               onChange={(e) => setEmotionNotes(e.target.value)}
@@ -1282,10 +1291,10 @@ export default function EmotionTracker() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Emotion Entry</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="dark:text-gray-400">
               Are you sure you want to delete this emotion entry? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1300,19 +1309,19 @@ export default function EmotionTracker() {
 
       {/* Help Dialog */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle>How to Use the Emotion Tracker</DialogTitle>
-            <DialogDescription>Quick guide to help you track your emotions effectively</DialogDescription>
+            <DialogDescription className="dark:text-gray-400">Quick guide to help you track your emotions effectively</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 my-2">
             <div className="flex gap-3 items-start">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <TargetIcon className="h-5 w-5 text-indigo-600" />
+              <div className="bg-indigo-100 dark:bg-gray-700 p-2 rounded-full">
+                <TargetIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium">Step 1: Set Starting Emotion</h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Click anywhere on the circumplex to set your starting emotion. This is where your emotional journey
                   begins.
                 </p>
@@ -1320,12 +1329,12 @@ export default function EmotionTracker() {
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <PlayIcon className="h-5 w-5 text-indigo-600" />
+              <div className="bg-indigo-100 dark:bg-gray-700 p-2 rounded-full">
+                <PlayIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium">Step 2: Record Path (Optional)</h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Click &quot;Record Path&quot; if you want to track how your emotion changes over time. Move around the
                   circumplex to trace your emotional journey.
                 </p>
@@ -1333,12 +1342,12 @@ export default function EmotionTracker() {
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <BookmarkIcon className="h-5 w-5 text-indigo-600" />
+              <div className="bg-indigo-100 dark:bg-gray-700 p-2 rounded-full">
+                <BookmarkIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium">Step 3: Log Your Emotion</h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Click &quot;Log Emotion&quot; to save your current emotion or &quot;Log Emotion Path&quot; to save the entire emotional
                   journey you recorded.
                 </p>
@@ -1346,12 +1355,12 @@ export default function EmotionTracker() {
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <EditIcon className="h-5 w-5 text-indigo-600" />
+              <div className="bg-indigo-100 dark:bg-gray-700 p-2 rounded-full">
+                <EditIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium">Editing & Correcting</h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Use &quot;Reset&quot; to start over. In the History tab, hover over entries to edit or delete them. Use &quot;Undo&quot;
                   to revert your last action.
                 </p>
@@ -1366,16 +1375,16 @@ export default function EmotionTracker() {
       
       {/* Add Import Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle>Import Emotion Data</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-gray-400">
               Paste previously exported JSON data to import your emotion logs.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
             <textarea
-              className="w-full min-h-[200px] p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full min-h-[200px] p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Paste JSON data here..."
               id="importData"
             />
@@ -1399,20 +1408,20 @@ export default function EmotionTracker() {
       
       {/* Add Collection Dialog */}
       <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle>Create New Collection</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-gray-400">
               Collections help you organize different sets of emotion logs.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
-            <label htmlFor="collection-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="collection-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Collection Name
             </label>
             <input
               id="collection-name"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Enter collection name..."
               value={newCollectionName}
               onChange={(e) => setNewCollectionName(e.target.value)}

@@ -160,21 +160,21 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
   };
 
   return (
-    <Card className="overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:border-gray-200 bg-white/70 backdrop-blur-sm">
+    <Card className="overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm">
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full shadow-inner ${emotionColor}`}></div>
-            <h3 className="font-medium text-gray-800">
+            <h3 className="font-medium text-gray-800 dark:text-gray-200">
               {entry.emotion}
             </h3>
           </div>
-          <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">{formattedDate}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full">{formattedDate}</span>
         </div>
 
         {/* Show start and end emotions if available */}
         {hasStartEmotion && (
-          <div className="mt-3 mb-1 flex items-center text-xs text-gray-600 bg-gray-50/70 p-2 rounded-md">
+          <div className="mt-3 mb-1 flex items-center text-xs text-gray-600 dark:text-gray-300 bg-gray-50/70 dark:bg-gray-700/70 p-2 rounded-md">
             <div className="flex items-center">
               <div className={`w-2.5 h-2.5 rounded-full ${startEmotionColor} mr-1.5 shadow-sm`}></div>
               <span className="font-medium">{entry.startEmotion}</span>
@@ -189,18 +189,18 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
 
         {/* Display notes if available with improved styling */}
         {hasNotes && (
-          <div className="mt-3 p-3 bg-indigo-50/50 rounded-md text-sm text-gray-700 border-l-3 border-indigo-300 shadow-sm">
+          <div className="mt-3 p-3 bg-indigo-50/50 dark:bg-indigo-900/30 rounded-md text-sm text-gray-700 dark:text-gray-300 border-l-3 border-indigo-300 dark:border-indigo-600 shadow-sm">
             <p className="whitespace-pre-wrap italic">{entry.notes}</p>
           </div>
         )}
 
         <div className="flex items-center justify-between mt-3">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="bg-gray-50 p-1.5 px-2.5 rounded-md">
-              <span className="text-gray-500 font-medium">Valence:</span> <span className="text-indigo-700">{entry.valence}</span>
+            <div className="bg-gray-50 dark:bg-gray-700 p-1.5 px-2.5 rounded-md">
+              <span className="text-gray-500 dark:text-gray-400 font-medium">Valence:</span> <span className="text-indigo-700 dark:text-indigo-300">{entry.valence}</span>
             </div>
-            <div className="bg-gray-50 p-1.5 px-2.5 rounded-md">
-              <span className="text-gray-500 font-medium">Arousal:</span> <span className="text-indigo-700">{entry.arousal}</span>
+            <div className="bg-gray-50 dark:bg-gray-700 p-1.5 px-2.5 rounded-md">
+              <span className="text-gray-500 dark:text-gray-400 font-medium">Arousal:</span> <span className="text-indigo-700 dark:text-indigo-300">{entry.arousal}</span>
             </div>
           </div>
 
@@ -209,18 +209,18 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
               variant="ghost" 
               size="sm" 
               onClick={() => setExpanded(!expanded)} 
-              className="h-8 px-3 hover:bg-gray-100 transition-colors"
+              className="h-8 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              {expanded ? <ChevronUpIcon className="h-4 w-4 text-gray-600" /> : <ChevronDownIcon className="h-4 w-4 text-gray-600" />}
+              {expanded ? <ChevronUpIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" /> : <ChevronDownIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
               <span className="ml-1 text-xs font-medium">{expanded ? "Hide" : "Show"} Path</span>
             </Button>
           )}
         </div>
 
         {expanded && hasPath && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
             <div className="flex flex-wrap items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-gray-700">Emotion Path Visualization</h4>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Emotion Path Visualization</h4>
               
               {/* Add interactive controls */}
               <div className="flex items-center gap-2">
@@ -246,8 +246,8 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
             
             {/* Display current point info during animation */}
             {isPlaying && activePointIndex !== null && (
-              <div className="mb-2 p-2 bg-indigo-50 rounded-md text-xs animate-fade-in-up">
-                <div className="font-medium text-indigo-800">Path Position: {activePointIndex + 1}/{entry.path?.length || 0}</div>
+              <div className="mb-2 p-2 bg-indigo-50 dark:bg-indigo-900/50 rounded-md text-xs animate-fade-in-up">
+                <div className="font-medium text-indigo-800 dark:text-indigo-300">Path Position: {activePointIndex + 1}/{entry.path?.length || 0}</div>
                 {getPointInfo(activePointIndex) && (
                   <div className="grid grid-cols-2 gap-2 mt-1">
                     <span>Valence: {getPointInfo(activePointIndex)?.valence}</span>
@@ -259,17 +259,17 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
             
             <div 
               ref={chartRef}
-              className="relative w-full h-[40vw] max-h-40 min-h-[120px] bg-gray-50 rounded-lg overflow-hidden shadow-inner"
+              className="relative w-full h-[40vw] max-h-40 min-h-[120px] bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden shadow-inner"
             >
               {/* Quadrant backgrounds with significantly more vibrant colors */}
-              <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-200/80 to-red-300/70"></div>
-              <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-tr from-yellow-200/80 to-amber-300/70"></div>
-              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-200/80 to-sky-300/70"></div>
-              <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-br from-green-200/80 to-emerald-300/70"></div>
+              <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-200/80 to-red-300/70 dark:from-red-900/30 dark:to-red-800/40"></div>
+              <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-tr from-yellow-200/80 to-amber-300/70 dark:from-amber-900/30 dark:to-amber-800/40"></div>
+              <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-200/80 to-sky-300/70 dark:from-blue-900/30 dark:to-sky-800/40"></div>
+              <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-br from-green-200/80 to-emerald-300/70 dark:from-emerald-900/30 dark:to-emerald-800/40"></div>
 
               {/* Clear quadrant separators */}
-              <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-gray-400/30"></div>
-              <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-400/30"></div>
+              <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-gray-400/30 dark:bg-gray-500/50"></div>
+              <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-400/30 dark:bg-gray-500/50"></div>
 
               {/* Improved SVG visualization with responsive dimensions */}
               <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -405,19 +405,19 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
               </svg>
 
               {/* Labels with responsive styling - hide on very small screens */}
-              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-[9px] font-medium text-gray-500 bg-white/70 px-1 rounded-b-md shadow-sm"
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-[9px] font-medium text-gray-500 dark:text-gray-300 bg-white/70 dark:bg-gray-800/70 px-1 rounded-b-md shadow-sm"
                    style={{ fontSize: getFontSize() }}>
                 {chartDimensions.width < 250 ? "+" : "Activated"}
               </div>
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-[9px] font-medium text-gray-500 bg-white/70 px-1 rounded-t-md shadow-sm"
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-[9px] font-medium text-gray-500 dark:text-gray-300 bg-white/70 dark:bg-gray-800/70 px-1 rounded-t-md shadow-sm"
                    style={{ fontSize: getFontSize() }}>
                 {chartDimensions.width < 250 ? "-" : "Deactivated"}
               </div>
-              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 text-[9px] font-medium text-gray-500 bg-white/70 px-1 rounded-r-md shadow-sm"
+              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 text-[9px] font-medium text-gray-500 dark:text-gray-300 bg-white/70 dark:bg-gray-800/70 px-1 rounded-r-md shadow-sm"
                    style={{ fontSize: getFontSize() }}>
                 {chartDimensions.width < 250 ? "-" : "Negative"}
               </div>
-              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 text-[9px] font-medium text-gray-500 bg-white/70 px-1 rounded-l-md shadow-sm"
+              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 text-[9px] font-medium text-gray-500 dark:text-gray-300 bg-white/70 dark:bg-gray-800/70 px-1 rounded-l-md shadow-sm"
                    style={{ fontSize: getFontSize() }}>
                 {chartDimensions.width < 250 ? "+" : "Positive"}
               </div>
@@ -442,10 +442,10 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
                     }
                     setActivePointIndex(parseInt(e.target.value));
                   }}
-                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-indigo-600 dark:accent-indigo-400"
                   disabled={isPlaying}
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <span>Start</span>
                   <span>End</span>
                 </div>
@@ -453,9 +453,9 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
             )}
             
             {/* Responsive path information footer */}
-            <div className="mt-2 text-xs text-gray-600 flex flex-wrap justify-between bg-gray-50 p-2 rounded-md">
+            <div className="mt-2 text-xs text-gray-600 dark:text-gray-300 flex flex-wrap justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded-md">
               <span className="font-medium">
-                Path: <span className="text-indigo-600">{entry.path?.length || 0} points</span>
+                Path: <span className="text-indigo-600 dark:text-indigo-300">{entry.path?.length || 0} points</span>
               </span>
               <div className="flex items-center gap-2 md:gap-3 ml-auto">
                 <span className="flex items-center">
