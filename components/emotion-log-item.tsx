@@ -425,6 +425,7 @@ export const EmotionLogItem = memo(function EmotionLogItem({ entry, getEmotionCo
                   min="0"
                   max={entry.path.length - 1}
                   value={activePointIndex !== null ? activePointIndex : 0}
+                  aria-valuenow={activePointIndex !== null ? activePointIndex : 0}
                   onChange={(e) => {
                     if (isPlaying) {
                       if (animationRef.current !== null) {
