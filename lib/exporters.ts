@@ -1,6 +1,6 @@
 export type ExportFormat = 'json' | 'csv';
 
-export function exportEmotionData(data: any, format: ExportFormat, filename: string): void {
+export function exportEmotionData(data: EmotionLogEntry[], format: ExportFormat, filename: string): void {
   switch (format) {
     case 'csv':
       exportAsCSV(data, filename);
@@ -12,13 +12,13 @@ export function exportEmotionData(data: any, format: ExportFormat, filename: str
   }
 }
 
-function exportAsJSON(data: any, filename: string): void {
+function exportAsJSON(data: EmotionLogEntry[], filename: string): void {
   const dataStr = JSON.stringify(data, null, 2);
   const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
   downloadFile(dataUri, `${filename}.json`);
 }
 
-function exportAsCSV(data: any, filename: string): void {
+function exportAsCSV(data: EmotionLogEntry[], filename: string): void {
   if (!Array.isArray(data) || data.length === 0) return;
   
   const headers = Object.keys(data[0]).join(',');

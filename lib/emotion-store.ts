@@ -22,7 +22,7 @@ interface EmotionState {
 
 export const useEmotionStore = create<EmotionState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       emotionLog: [],
       undoStack: [],
       currentPosition: { x: 0.5, y: 0.5 },

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TargetIcon, PlayIcon, BookmarkIcon, EditIcon, ChartIcon } from 'lucide-react';
 
 export function UserGuide() {
   const [currentTab, setCurrentTab] = useState('basics');

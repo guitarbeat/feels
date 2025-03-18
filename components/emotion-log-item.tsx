@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, memo } from "react"
 import { format } from "date-fns"
-import { ChevronDownIcon, ChevronUpIcon, ZoomInIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 

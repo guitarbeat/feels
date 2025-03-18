@@ -41,7 +41,7 @@ export function EmotionCircumplex({
     if (!planeRef.current) return;
     
     const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         const { width, height } = entry.contentRect;
         setContainerSize({ width, height });
       }
@@ -259,36 +259,10 @@ export function EmotionCircumplex({
     return { valence, arousal };
   };
 
-  // Generate tooltip content based on mouse position
-  const generateTooltipContent = () => {
-    if (!hoveredQuadrant) return null;
-    
-    const { valence, arousal } = getValenceArousal(mousePosition.x, mousePosition.y);
-    const quadrantInfo = getQuadrantInfo(hoveredQuadrant);
-    
-    return (
-      <div className="absolute px-3 py-2 bg-white/90 backdrop-blur-md rounded-lg shadow-lg text-sm border border-gray-100 transition-opacity z-50"
-           style={{
-             left: `${mousePosition.x * 100}%`,
-             top: `${mousePosition.y * 100 + 15}px`,
-             transform: 'translateX(-50%)',
-             opacity: isDragging ? 0 : 1,
-             pointerEvents: 'none'
-           }}>
-        <div className="font-medium">{quadrantInfo.name}</div>
-        <div className="text-xs text-gray-600">{quadrantInfo.description}</div>
-        <div className="mt-1 grid grid-cols-2 gap-x-3 text-xs">
-          <span>Valence: <strong>{valence.toFixed(2)}</strong></span>
-          <span>Arousal: <strong>{arousal.toFixed(2)}</strong></span>
-        </div>
-      </div>
-    );
-  };
-
   // Add keyboard navigation support
   const handleKeyDown = (event: React.KeyboardEvent) => {
     const step = 0.05;
-    let newPosition = { ...position };
+    const newPosition = { ...position };
     
     switch (event.key) {
       case 'ArrowUp':
@@ -324,6 +298,7 @@ export function EmotionCircumplex({
         aria-label="Emotion selector"
         aria-valuetext={`Valence: ${getValenceArousal(position.x, position.y).valence.toFixed(2)}, Arousal: ${getValenceArousal(position.x, position.y).arousal.toFixed(2)}`}
         onKeyDown={handleKeyDown}
+        aria-valuenow={position.x}
       >
         {/* Background with cleaner, more distinct quadrants */}
         <div className="absolute inset-0">
