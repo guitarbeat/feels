@@ -129,13 +129,15 @@
   p {
     @apply text-pretty;
   }
+}
 
-  /* Responsive padding for container elements */
+@layer utilities {
+  /* Responsive container class */
   .container {
-    @apply px-fluid-2;
+    @apply px-4 sm:px-6 lg:px-8;
   }
 
-  /* Responsive spacing utilities */
+  /* Responsive grid and flex layouts */
   .responsive-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));

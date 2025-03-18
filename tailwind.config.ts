@@ -85,6 +85,17 @@ const config = {
         'fluid-3': 'clamp(0.75rem, 0.6rem + 0.75vw, 1.5rem)',
         'fluid-4': 'clamp(1rem, 0.8rem + 1vw, 2rem)',
         'fluid-5': 'clamp(1.5rem, 1.2rem + 1.5vw, 3rem)',
+        'safe-1': 'clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem)',
+        'safe-2': 'clamp(0.5rem, 0.4rem + 0.5vw, 1rem)',
+        'safe-3': 'clamp(0.75rem, 0.6rem + 0.75vw, 1.5rem)',
+        'safe-4': 'clamp(1rem, 0.8rem + 1vw, 2rem)',
+        'safe-5': 'clamp(1.5rem, 1.2rem + 1.5vw, 3rem)',
+      },
+      padding: {
+        responsive: 'clamp(1rem, 3vw, 2rem)',
+      },
+      gap: {
+        responsive: 'clamp(1rem, 2vw, 2rem)',
       },
       minHeight: {
         dynamic: 'clamp(300px, 50vh, 800px)',
@@ -136,6 +147,14 @@ const config = {
         "pulse-glow": "pulse-glow 2s infinite",
         "dash": "dash 1.5s ease-in-out forwards",
       },
+    },
+    screens: {
+      xs: '480px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
     },
   },
   plugins: [
