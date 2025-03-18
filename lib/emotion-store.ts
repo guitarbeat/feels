@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist, type StateStorage } from 'zustand/middleware';
+import { create, type StateCreator } from 'zustand';
+import { persist, type PersistOptions, type StorageValue } from 'zustand/middleware';
 import type { EmotionLogEntry } from '@/components/emotion-log-item';
 
 interface Position {
@@ -32,8 +32,13 @@ type EmotionStore = EmotionState & EmotionStateActions;
 type SetEmotionState = (state: EmotionState) => Partial<EmotionState> | EmotionState;
 type StateUpdater = (fn: SetEmotionState) => void;
 
+type EmotionPersist = (
+  config: StateCreator<EmotionStore>,
+  options: PersistOptions<EmotionStore>
+) => StateCreator<EmotionStore>;
+
 export const useEmotionStore = create<EmotionStore>()(
-  persist(
+  (persist as EmotionPersist)(
     (set: StateUpdater) => ({
       emotionLog: [],
       undoStack: [],
