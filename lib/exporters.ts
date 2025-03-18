@@ -1,18 +1,20 @@
+import type { EmotionLogEntry } from '@/components/emotion-log-item';
+
 export type ExportFormat = 'json' | 'csv';
 
-interface EmotionEntry {
+interface CsvHeader {
   emotion: string;
   valence: number;
   arousal: number;
   timestamp: string;
   notes?: string;
-  path?: { x: number; y: number }[];
   startEmotion?: string;
   startValence?: number;
   startArousal?: number;
+  path?: string;
 }
 
-export function exportEmotionData(data: EmotionEntry[], format: ExportFormat, filename: string): void {
+export function exportEmotionData(data: EmotionLogEntry[], format: ExportFormat, filename: string): void {
   switch (format) {
     case 'csv':
       exportAsCSV(data, filename);
@@ -24,23 +26,26 @@ export function exportEmotionData(data: EmotionEntry[], format: ExportFormat, fi
   }
 }
 
-function exportAsJSON(data: EmotionEntry[], filename: string): void {
+function exportAsJSON(data: EmotionLogEntry[], filename: string): void {
   const dataStr = JSON.stringify(data, null, 2);
   const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
   downloadFile(dataUri, `${filename}.json`);
 }
 
-function exportAsCSV(data: EmotionEntry[], filename: string): void {
+function exportAsCSV(data: EmotionLogEntry[], filename: string): void {
   if (!Array.isArray(data) || data.length === 0) return;
   
-  const headers = Object.keys(data[0]).join(',');
+  const headers = Object.keys(data[0]) as (keyof CsvHeader)[];
   const rows = data.map(entry => 
-    Object.values(entry).map(value => 
-      typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
-    ).join(',')
+    headers.map(key => {
+      const value = entry[key];
+      if (typeof value === 'string') return `"${value.replace(/"/g, '""')}"`;
+      if (Array.isArray(value)) return `"${JSON.stringify(value)}"`;
+      return value;
+    }).join(',')
   );
   
-  const csv = [headers, ...rows].join('\n');
+  const csv = [headers.join(','), ...rows].join('\n');
   const dataUri = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
   downloadFile(dataUri, `${filename}.csv`);
 }
