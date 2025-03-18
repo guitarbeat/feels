@@ -12,9 +12,19 @@ const config = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: {
+        DEFAULT: '1rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
       screens: {
-        "2xl": "1400px",
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1536px',
       },
     },
     extend: {
@@ -61,6 +71,32 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontSize: {
+        'fluid-xs': 'clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)',
+        'fluid-sm': 'clamp(0.875rem, 0.8rem + 0.375vw, 1rem)',
+        'fluid-base': 'clamp(1rem, 0.925rem + 0.375vw, 1.125rem)',
+        'fluid-lg': 'clamp(1.125rem, 1rem + 0.625vw, 1.375rem)',
+        'fluid-xl': 'clamp(1.25rem, 1.125rem + 0.625vw, 1.5rem)',
+        'fluid-2xl': 'clamp(1.5rem, 1.375rem + 0.625vw, 2rem)',
+      },
+      spacing: {
+        'fluid-1': 'clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem)',
+        'fluid-2': 'clamp(0.5rem, 0.4rem + 0.5vw, 1rem)',
+        'fluid-3': 'clamp(0.75rem, 0.6rem + 0.75vw, 1.5rem)',
+        'fluid-4': 'clamp(1rem, 0.8rem + 1vw, 2rem)',
+        'fluid-5': 'clamp(1.5rem, 1.2rem + 1.5vw, 3rem)',
+      },
+      minHeight: {
+        dynamic: 'clamp(300px, 50vh, 800px)',
+        'dynamic-sm': 'clamp(200px, 30vh, 400px)',
+        'dynamic-lg': 'clamp(400px, 70vh, 1000px)',
+      },
+      maxWidth: {
+        readable: '65ch',
+        'fluid-lg': 'clamp(600px, 90vw, 1200px)',
+        'fluid-md': 'clamp(400px, 85vw, 800px)',
+        'fluid-sm': 'clamp(300px, 80vw, 600px)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -102,7 +138,10 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require('@tailwindcss/container-queries'),
+  ],
 } satisfies Config
 
 export default config

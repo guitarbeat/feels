@@ -110,6 +110,45 @@
   }
 }
 
+@layer base {
+  html {
+    font-size: clamp(14px, 1vw + 8px, 18px);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Improve text rendering */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-balance tracking-tight;
+  }
+
+  p {
+    @apply text-pretty;
+  }
+
+  /* Responsive padding for container elements */
+  .container {
+    @apply px-fluid-2;
+  }
+
+  /* Responsive spacing utilities */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .responsive-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.5rem, 1.5vw, 1.5rem);
+  }
+}
+
 /* Animation for the path drawing */
 @keyframes dash {
   to {
