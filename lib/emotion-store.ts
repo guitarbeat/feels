@@ -1,5 +1,5 @@
 import { create, type StateCreator } from 'zustand';
-import { persist, type PersistOptions, type StorageValue } from 'zustand/middleware';
+import { persist, type PersistOptions } from 'zustand/middleware';
 import type { EmotionLogEntry } from '@/components/emotion-log-item';
 
 interface Position {
