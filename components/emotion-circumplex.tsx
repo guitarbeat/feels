@@ -1,488 +1,268 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect, useCallback } from "react"
+import React, { useState, useCallback, useEffect, useRef } from "react"
 
 interface EmotionCircumplexProps {
   position: { x: number; y: number }
   onPositionChange: (position: { x: number; y: number }) => void
-  onCircumplexClick?: (position: { x: number; y: number }) => void
+  onCircumplexClick: (position: { x: number; y: number }) => void
   onDragStart?: () => void
   onDragEnd?: () => void
-  recordingMode?: "idle" | "start-selected" | "recording" | "completed"
+  recordingMode?: string
   startPosition?: { x: number; y: number }
 }
 
-export function EmotionCircumplex({
+interface EmotionDomain {
+  label: string
+  emoji: string
+  color: string
+  valenceRange: [number, number] // normalized 0-1
+  arousalRange: [number, number] // normalized 0-1
+  intensity?: number // 1-3, higher means stronger emotion
+}
+
+export const EmotionCircumplex: React.FC<EmotionCircumplexProps> = ({
   position,
   onPositionChange,
   onCircumplexClick,
   onDragStart,
   onDragEnd,
-  recordingMode = "idle",
+  recordingMode,
   startPosition = { x: 0.5, y: 0.5 },
-}: EmotionCircumplexProps) {
-  const planeRef = useRef<HTMLDivElement>(null)
+}) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-  const [hoveredQuadrant, setHoveredQuadrant] = useState<string | null>(null)
-  
-  // Calculate marker size based on container size for better responsiveness
-  const getMarkerSize = useCallback(() => {
-    if (containerSize.width <= 0) return 28; // Default size
-    return Math.max(Math.min(containerSize.width / 12, 32), 20); // Responsive size between 20-32px
-  }, [containerSize.width]);
-  
-  const markerSize = getMarkerSize();
+  const containerRef = useRef<HTMLDivElement>(null)
+  const markerRef = useRef<HTMLDivElement>(null)
 
-  // Resize observer to track container dimensions
-  useEffect(() => {
-    if (!planeRef.current) return;
+  // Define emotion domains for each quadrant
+  const emotionDomains: EmotionDomain[] = [
+    // Q1: Positive valence, high arousal (top right)
+    { label: "Excited", emoji: "🤩", color: "rgba(250, 204, 21, 0.7)", valenceRange: [0.7, 1], arousalRange: [0, 0.3], intensity: 3 },
+    { label: "Happy", emoji: "😄", color: "rgba(250, 204, 21, 0.6)", valenceRange: [0.6, 0.85], arousalRange: [0.15, 0.4], intensity: 2 },
+    { label: "Cheerful", emoji: "😊", color: "rgba(250, 204, 21, 0.5)", valenceRange: [0.55, 0.75], arousalRange: [0.25, 0.45], intensity: 1 },
+    { label: "Content", emoji: "🙂", color: "rgba(250, 204, 21, 0.4)", valenceRange: [0.5, 0.65], arousalRange: [0.35, 0.5], intensity: 1 },
     
-    const resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        setContainerSize({ width, height });
-      }
-    });
+    // Q2: Negative valence, high arousal (top left)
+    { label: "Angry", emoji: "😠", color: "rgba(239, 68, 68, 0.7)", valenceRange: [0, 0.3], arousalRange: [0, 0.3], intensity: 3 },
+    { label: "Tense", emoji: "😤", color: "rgba(239, 68, 68, 0.6)", valenceRange: [0.15, 0.4], arousalRange: [0.15, 0.4], intensity: 2 },
+    { label: "Nervous", emoji: "😰", color: "rgba(239, 68, 68, 0.5)", valenceRange: [0.25, 0.45], arousalRange: [0.25, 0.45], intensity: 1 },
+    { label: "Upset", emoji: "😟", color: "rgba(239, 68, 68, 0.4)", valenceRange: [0.35, 0.5], arousalRange: [0.35, 0.5], intensity: 1 },
     
-    resizeObserver.observe(planeRef.current);
+    // Q3: Negative valence, low arousal (bottom left)
+    { label: "Sad", emoji: "😢", color: "rgba(59, 130, 246, 0.7)", valenceRange: [0, 0.3], arousalRange: [0.7, 1], intensity: 3 },
+    { label: "Depressed", emoji: "😔", color: "rgba(59, 130, 246, 0.6)", valenceRange: [0.15, 0.4], arousalRange: [0.6, 0.85], intensity: 2 },
+    { label: "Bored", emoji: "😒", color: "rgba(59, 130, 246, 0.5)", valenceRange: [0.25, 0.45], arousalRange: [0.55, 0.75], intensity: 1 },
+    { label: "Fatigued", emoji: "😪", color: "rgba(59, 130, 246, 0.4)", valenceRange: [0.35, 0.5], arousalRange: [0.5, 0.65], intensity: 1 },
     
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  // Function to determine which quadrant the mouse is in
-  const getQuadrant = useCallback((x: number, y: number): string => {
-    if (x >= 0.5 && y < 0.5) return "topRight";
-    if (x < 0.5 && y < 0.5) return "topLeft";
-    if (x < 0.5 && y >= 0.5) return "bottomLeft";
-    return "bottomRight";
-  }, []);
-
-  // Handle mouse move over the plane to track position for label visibility
-  const handleMouseMoveOverPlane = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (planeRef.current) {
-      const rect = planeRef.current.getBoundingClientRect()
-      const x = (event.clientX - rect.left) / rect.width
-      const y = (event.clientY - rect.top) / rect.height
-      setMousePosition({ x, y })
-      
-      // Update hovered quadrant for interactive effects
-      const currentQuadrant = getQuadrant(x, y);
-      if (currentQuadrant !== hoveredQuadrant) {
-        setHoveredQuadrant(currentQuadrant);
-      }
-    }
-  }
-
-  // Handle click on the plane
-  const handlePlaneClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (planeRef.current) {
-      const rect = planeRef.current.getBoundingClientRect()
-      const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
-      const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
-
-      if (onCircumplexClick) {
-        onCircumplexClick({ x, y })
-      } else {
-        onPositionChange({ x, y })
-      }
-    }
-  }
-
-  // Handle mouse down on the marker
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation()
-    setIsDragging(true)
-    if (onDragStart) onDragStart()
-  }
-
-  // Handle mouse move
-  const handleMouseMove = useCallback(
-    (event: MouseEvent) => {
-      if (isDragging && planeRef.current) {
-        const rect = planeRef.current.getBoundingClientRect()
-        const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
-        const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
-        onPositionChange({ x, y })
-      }
-    },
-    [isDragging, onPositionChange],
-  )
-
-  // Handle mouse up
-  const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false)
-      if (onDragEnd) onDragEnd()
-    }
-  }, [isDragging, onDragEnd])
-
-  // Add and remove event listeners
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-    } else {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp])
-
-  // Handle touch events for mobile
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    event.stopPropagation()
-    setIsDragging(true)
-    if (onDragStart) onDragStart()
-  }
-
-  const handleTouchMove = useCallback(
-    (event: TouchEvent) => {
-      if (isDragging && planeRef.current && event.touches[0]) {
-        const rect = planeRef.current.getBoundingClientRect()
-        const touch = event.touches[0]
-        const x = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
-        const y = Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height))
-        onPositionChange({ x, y })
-      }
-    },
-    [isDragging, onPositionChange],
-  )
-
-  const handleTouchEnd = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false)
-      if (onDragEnd) onDragEnd()
-    }
-  }, [isDragging, onDragEnd])
-
-  // Add and remove touch event listeners
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("touchmove", handleTouchMove, { passive: false })
-      document.addEventListener("touchend", handleTouchEnd)
-    } else {
-      document.removeEventListener("touchmove", handleTouchMove)
-      document.removeEventListener("touchend", handleTouchEnd)
-    }
-
-    return () => {
-      document.removeEventListener("touchmove", handleTouchMove)
-      document.removeEventListener("touchend", handleTouchEnd)
-    }
-  }, [isDragging, handleTouchMove, handleTouchEnd])
-
-  // Function to determine if a label should be visible based on mouse proximity and screen size
-  const isLabelVisible = (labelX: number, labelY: number) => {
-    // Adjust threshold based on container size for better mobile experience
-    const threshold = containerSize.width < 400 ? 0.12 : containerSize.width < 600 ? 0.1 : 0.08;
-    const distance = Math.sqrt(Math.pow(mousePosition.x - labelX, 2) + Math.pow(mousePosition.y - labelY, 2));
-    return distance < threshold && !isDragging;
-  }
-  // Organized emotion label positions
-  const emotionLabels = [
-    // Top-right (High arousal, positive valence)
-    { x: 0.75, y: 0.15, label: "Excited", emoji: "🤩", color: "text-yellow-700" },
-    { x: 0.85, y: 0.3, label: "Happy", emoji: "😄", color: "text-yellow-700" },
-    { x: 0.88, y: 0.22, label: "Cheerful", emoji: "😁", color: "text-yellow-700" },
-    { x: 0.78, y: 0.25, label: "Delighted", emoji: "😍", color: "text-yellow-700" },
-    { x: 0.82, y: 0.15, label: "Euphoric", emoji: "🤗", color: "text-yellow-700" },
-
-    // Top-left (High arousal, negative valence)
-    { x: 0.25, y: 0.15, label: "Angry", emoji: "😠", color: "text-red-700" },
-    { x: 0.15, y: 0.3, label: "Anxious", emoji: "😰", color: "text-red-700" },
-    { x: 0.2,  y: 0.2, label: "Annoyed", emoji: "😖", color: "text-red-700" },
-    { x: 0.15, y: 0.25, label: "Frustrated", emoji: "😤", color: "text-red-700" },
-    { x: 0.22, y: 0.18, label: "Tense", emoji: "😬", color: "text-red-700" },
-
-    // Bottom-left (Low arousal, negative valence)
-    { x: 0.25, y: 0.85, label: "Sad", emoji: "😢", color: "text-blue-700" },
-    { x: 0.15, y: 0.7,  label: "Depressed", emoji: "😔", color: "text-blue-700" },
-    { x: 0.25, y: 0.9,  label: "Hopeless", emoji: "😩", color: "text-blue-700" },
-    { x: 0.2,  y: 0.8,  label: "Discouraged", emoji: "😞", color: "text-blue-700" },
-    { x: 0.18, y: 0.75, label: "Lonely", emoji: "😟", color: "text-blue-700" },
-
-    // Bottom-right (Low arousal, positive valence)
-    { x: 0.75, y: 0.85, label: "Relaxed", emoji: "😌", color: "text-green-700" },
-    { x: 0.85, y: 0.7,  label: "Calm", emoji: "😇", color: "text-green-700" },
-    { x: 0.8,  y: 0.8,  label: "Serene", emoji: "😌", color: "text-green-700" },
-    { x: 0.85, y: 0.85, label: "Tranquil", emoji: "🌿", color: "text-green-700" },
-    { x: 0.78, y: 0.75, label: "Content", emoji: "😊", color: "text-green-700" },
+    // Q4: Positive valence, low arousal (bottom right)
+    { label: "Relaxed", emoji: "😌", color: "rgba(34, 197, 94, 0.7)", valenceRange: [0.7, 1], arousalRange: [0.7, 1], intensity: 3 },
+    { label: "Calm", emoji: "😇", color: "rgba(34, 197, 94, 0.6)", valenceRange: [0.6, 0.85], arousalRange: [0.6, 0.85], intensity: 2 },
+    { label: "Serene", emoji: "🧘", color: "rgba(34, 197, 94, 0.5)", valenceRange: [0.55, 0.75], arousalRange: [0.55, 0.75], intensity: 1 },
+    { label: "At ease", emoji: "😎", color: "rgba(34, 197, 94, 0.4)", valenceRange: [0.5, 0.65], arousalRange: [0.5, 0.65], intensity: 1 },
+    
+    // Center neutral emotion
+    { label: "Neutral", emoji: "😐", color: "rgba(156, 163, 175, 0.5)", valenceRange: [0.4, 0.6], arousalRange: [0.4, 0.6], intensity: 1 },
   ]
-  const getQuadrantInfo = (quadrant: string) => {
-    switch (quadrant) {
-      case "topRight":
-        return {
-          name: "Excitement",
-          description: "High energy, positive",
-          color: "",
-          hoverClass: ""
-        }
-      case "topLeft":
-        return {
-          name: "Distress",
-          description: "High energy, negative",
-          color: "",
-          hoverClass: ""
-        }
-      case "bottomLeft":
-        return {
-          name: "Depression",
-          description: "Low energy, negative",
-          color: "",
-          hoverClass: ""
-        }
-      case "bottomRight":
-        return {
-          name: "Contentment",
-          description: "Low energy, positive",
-          color: "",
-          hoverClass: ""
-        }
-      default:
-        return { name: "", description: "", color: "", hoverClass: "" }
-    }
-  }
 
-  // Helper function to get valence and arousal from position
-  const getValenceArousal = (x: number, y: number) => {
-    const valence = x * 2 - 1; // -1 to 1
-    const arousal = -(y * 2 - 1); // -1 to 1, inverted y-axis
-    return { valence, arousal };
-  };
+  // Find the current emotion domain based on position
+  const getCurrentEmotionDomain = useCallback((pos: { x: number; y: number }): EmotionDomain | null => {
+    // Convert from normalized coordinates to valence-arousal space for easier matching
+    const valence = pos.x
+    const arousal = 1 - pos.y  // Invert y-axis so higher y = higher arousal
+    
+    return emotionDomains.find(domain => 
+      valence >= domain.valenceRange[0] && 
+      valence <= domain.valenceRange[1] && 
+      arousal >= domain.arousalRange[0] && 
+      arousal <= domain.arousalRange[1]
+    ) || null
+  }, [emotionDomains])
 
-  // Add keyboard navigation support
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    const step = 0.05;
-    const newPosition = { ...position };
-    
-    switch (event.key) {
-      case 'ArrowUp':
-        newPosition.y = Math.max(0, position.y - step);
-        break;
-      case 'ArrowDown':
-        newPosition.y = Math.min(1, position.y + step);
-        break;
-      case 'ArrowLeft':
-        newPosition.x = Math.max(0, position.x - step);
-        break;
-      case 'ArrowRight':
-        newPosition.x = Math.min(1, position.x + step);
-        break;
-      default:
-        return;
+  // Position the marker within the container
+  const updateMarkerPosition = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height))
+
+    onPositionChange({ x, y })
+  }, [onPositionChange])
+
+  // Handle mouse/touch events
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    setIsDragging(true)
+    if (onDragStart) onDragStart()
+    updateMarkerPosition(e.clientX, e.clientY)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }, [onDragStart, updateMarkerPosition])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return
+    updateMarkerPosition(e.clientX, e.clientY)
+  }, [isDragging, updateMarkerPosition])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDragging(false)
+    if (onDragEnd) onDragEnd()
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }, [onDragEnd])
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // Only treat as a click if not dragging
+    if (!isDragging) {
+      updateMarkerPosition(e.clientX, e.clientY)
+      onCircumplexClick({ x: position.x, y: position.y })
     }
-    
-    onPositionChange(newPosition);
-    event.preventDefault();
-  };
+  }, [isDragging, onCircumplexClick, position.x, position.y, updateMarkerPosition])
+
+  // Calculate current domain for both marker positions
+  const currentDomain = getCurrentEmotionDomain(position)
   
   return (
-    <div className="relative">
+    <div className="relative w-full h-full">
       <div
-        ref={planeRef}
-        className="relative bg-white border border-gray-200 rounded-xl cursor-pointer overflow-hidden shadow-lg w-full aspect-square transition-all duration-300 hover:shadow-xl"
-        onClick={handlePlaneClick}
-        onMouseMove={handleMouseMoveOverPlane}
-        onMouseLeave={() => setHoveredQuadrant(null)}
-        tabIndex={0}
-        role="slider"
-        aria-label="Emotion selector"
-        aria-valuetext={`Valence: ${getValenceArousal(position.x, position.y).valence.toFixed(2)}, Arousal: ${getValenceArousal(position.x, position.y).arousal.toFixed(2)}`}
-        onKeyDown={handleKeyDown}
-        aria-valuenow={position.x}
+        ref={containerRef}
+        className="relative w-full h-full rounded-md border-[1.5px] border-gray-300/60 overflow-hidden cursor-grab active:cursor-grabbing bg-white shadow-sm"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onClick={handleClick}
       >
-        {/* Background with cleaner, more distinct quadrants */}
+        {/* Background quadrants with gradient coloring */}
+        <div className="absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-200/80 to-red-300/70"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-tr from-yellow-200/80 to-amber-300/70"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-200/80 to-sky-300/70"></div>
+        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-br from-green-200/80 to-emerald-300/70"></div>
+
+        {/* Axes */}
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-400/30"></div>
+        <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-gray-400/30"></div>
+
+        {/* Axis labels */}
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-[10px] font-medium text-gray-700">
+          High Arousal
+        </div>
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] font-medium text-gray-700">
+          Low Arousal
+        </div>
+        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-[10px] font-medium text-gray-700">
+          Negative
+        </div>
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[10px] font-medium text-gray-700">
+          Positive
+        </div>
+
+        {/* Emotion domain visualization */}
         <div className="absolute inset-0">
-          {/* Base plain white background */}
-          <div className="absolute inset-0 bg-white"></div>
-          
-          {/* Quadrants with improved color separation - removed accent circles */}
-          <div className={`absolute top-0 left-0 w-1/2 h-1/2 bg-gradient-to-tl from-red-100/80 to-red-200/70 transition-opacity duration-200 ${hoveredQuadrant === "topLeft" ? "opacity-100" : "opacity-80"}`}></div>
-          <div className={`absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-tr from-yellow-100/80 to-amber-200/70 transition-opacity duration-200 ${hoveredQuadrant === "topRight" ? "opacity-100" : "opacity-80"}`}></div>
-          <div className={`absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-bl from-blue-100/80 to-sky-200/70 transition-opacity duration-200 ${hoveredQuadrant === "bottomLeft" ? "opacity-100" : "opacity-80"}`}></div>
-          <div className={`absolute bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-br from-green-100/80 to-emerald-200/70 transition-opacity duration-200 ${hoveredQuadrant === "bottomRight" ? "opacity-100" : "opacity-80"}`}></div>
-          
-          {/* Grid overlay for better positioning reference */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLWRhc2hhcnJheT0iMiAyIiAvPjwvc3ZnPg==')] opacity-30"></div>
+          {emotionDomains.map((domain) => {
+            // Calculate domain region position 
+            const centerX = (domain.valenceRange[0] + domain.valenceRange[1]) / 2;
+            const centerY = 1 - (domain.arousalRange[0] + domain.arousalRange[1]) / 2; // Invert Y for proper positioning
+            const isActive = currentDomain?.label === domain.label;
+            
+            // Create a rectangular domain instead of a circular one
+            return (
+              <div 
+                key={domain.label}
+                className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${
+                  isActive ? 'scale-110 z-10' : 'opacity-70'
+                }`}
+                style={{
+                  left: `${centerX * 100}%`,
+                  top: `${centerY * 100}%`
+                }}
+              >
+                {/* Emotion bubble */}
+                <div 
+                  className={`flex flex-col items-center justify-center ${
+                    isActive ? 'filter drop-shadow-lg' : ''
+                  }`}
+                >
+                  <div 
+                    className={`flex items-center justify-center ${
+                      isActive ? 'animate-pulse-glow' : ''
+                    }`}
+                    style={{
+                      backgroundColor: domain.color,
+                      width: (domain.intensity || 1) * 14 + 'px',
+                      height: (domain.intensity || 1) * 14 + 'px',
+                      borderRadius: '6px',
+                      opacity: isActive ? 1 : 0.7
+                    }}
+                  >
+                    <span 
+                      className={`${isActive ? 'text-lg' : 'text-xs'} ${
+                        isActive ? 'opacity-100' : 'opacity-80'
+                      }`}
+                    >
+                      {domain.emoji}
+                    </span>
+                  </div>
+                  
+                  {/* Only show label if active or medium/high intensity */}
+                  {(isActive || (domain.intensity && domain.intensity > 1)) && (
+                    <span className={`text-xs font-medium mt-1 px-1 py-0.5 rounded-sm ${
+                      isActive 
+                        ? 'bg-white/80 text-gray-800 shadow-sm' 
+                        : 'text-gray-600'
+                    }`}>
+                      {domain.label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Stronger, more visible axes */}
-        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[1px] bg-gray-400/60 z-[1]"></div>
-        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-400/60 z-[1]"></div>
-
-        {/* Concentric circles with enhanced visibility */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[85%] border border-gray-300/50 rounded-full"></div>
-        {containerSize.width >= 300 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] border border-gray-300/50 rounded-full"></div>
-        )}
-        {containerSize.width >= 400 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35%] h-[35%] border border-gray-300/50 rounded-full"></div>
-        )}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10%] h-[10%] border-2 border-gray-300/60 rounded-full bg-gray-100/30"></div>
-
-        {/* Interactive tooltip that follows cursor */}
-        {mousePosition.x > 0 && !isDragging && hoveredQuadrant && (
-          <div
-            className="absolute px-3 py-2 bg-white/95 backdrop-blur-sm rounded-md shadow-lg text-xs border border-gray-100 transition-opacity z-50 animate-fade-in-up"
-            style={{
-              left: `${mousePosition.x * 100}%`,
-              top: `${mousePosition.y * 100 + 15}px`,
-              transform: 'translateX(-50%)',
-              opacity: isDragging ? 0 : 1,
-              pointerEvents: 'none'
-            }}
-          >
-            <div className="font-medium text-gray-800">{getQuadrantInfo(hoveredQuadrant).name}</div>
-            <div className="text-xs text-gray-600">{getQuadrantInfo(hoveredQuadrant).description}</div>
-            <div className="mt-1 grid grid-cols-2 gap-x-3 text-xs text-gray-700">
-              <span>Valence: <strong>{getValenceArousal(mousePosition.x, mousePosition.y).valence.toFixed(2)}</strong></span>
-              <span>Arousal: <strong>{getValenceArousal(mousePosition.x, mousePosition.y).arousal.toFixed(2)}</strong></span>
-            </div>
-          </div>
-        )}
         
-        {/* Enhanced emotion labels */}
-        {emotionLabels.map((emotion, index) => {
-          if (containerSize.width < 300 && index % 2 !== 0) return null;
-          
-          return (
-            <div
-              key={index}
-              className={`absolute text-xs font-medium ${emotion.color} bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-md flex items-center gap-1 transition-all duration-300 ${
-                isLabelVisible(emotion.x, emotion.y) ? "opacity-100 scale-100" : "opacity-0 scale-90"
-              }`}
-              style={{
-                left: `${emotion.x * 100}%`,
-                top: `${emotion.y * 100}%`,
-                transform: "translate(-50%, -50%)",
-                fontSize: containerSize.width < 400 ? '0.65rem' : '0.75rem',
-                zIndex: 5
-              }}
-            >
-              <span className="text-base">{emotion.emoji}</span>
-              {containerSize.width >= 350 && <span>{emotion.label}</span>}
-            </div>
-          );
-        })}
-
-        {/* Cleaner axis labels with consistent styling */}
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm"
-             style={{ fontSize: containerSize.width < 400 ? '0.65rem' : '0.75rem', zIndex: 5 }}>
-          {containerSize.width < 350 ? '-' : 'Negative'}
-        </div>
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm"
-             style={{ fontSize: containerSize.width < 400 ? '0.65rem' : '0.75rem', zIndex: 5 }}>
-          {containerSize.width < 350 ? '+' : 'Positive'}
-        </div>
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm"
-             style={{ fontSize: containerSize.width < 400 ? '0.65rem' : '0.75rem', zIndex: 5 }}>
-          {containerSize.width < 350 ? '↑' : 'High Energy'}
-        </div>
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm"
-             style={{ fontSize: containerSize.width < 400 ? '0.65rem' : '0.75rem', zIndex: 5 }}>
-          {containerSize.width < 350 ? '↓' : 'Low Energy'}
-        </div>
-
-        {/* Cleaner quadrant labels */}
-        {containerSize.width >= 450 && (
-          <>
-            <div className="absolute top-[25%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-red-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm z-10">
-              Distress
-            </div>
-            <div className="absolute top-[25%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-yellow-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm z-10">
-              Excitement
-            </div>
-            <div className="absolute top-[75%] left-[25%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-blue-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm z-10">
-              Depression
-            </div>
-            <div className="absolute top-[75%] left-[75%] -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-green-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm z-10">
-              Contentment
-            </div>
-          </>
-        )}
-
-        {/* Enhanced start position marker */}
-        {(recordingMode === "start-selected" || recordingMode === "recording" || recordingMode === "completed") && (
+        {/* Highlight current domain area with subtle background */}
+        {currentDomain && (
           <div
-            className="absolute bg-gradient-to-br from-green-400 to-green-600 rounded-full border-2 border-white shadow-md z-20"
+            className="absolute bg-white/30 backdrop-blur-sm transition-all duration-200 z-0 rounded-md"
             style={{
-              width: markerSize - 4,
-              height: markerSize - 4,
-              left: `calc(${startPosition.x * 100}% - ${(markerSize - 4) / 2}px)`,
-              top: `calc(${startPosition.y * 100}% - ${(markerSize - 4) / 2}px)`,
+              left: `${currentDomain.valenceRange[0] * 100}%`,
+              top: `${(1 - currentDomain.arousalRange[1]) * 100}%`,
+              width: `${(currentDomain.valenceRange[1] - currentDomain.valenceRange[0]) * 100}%`,
+              height: `${(currentDomain.arousalRange[1] - currentDomain.arousalRange[0]) * 100}%`,
             }}
-          >
-            <span className="sr-only">Starting emotion</span>
-            {recordingMode === "start-selected" && (
-              <span className="absolute inset-0 rounded-full bg-green-300 opacity-30 animate-ping"></span>
-            )}
-          </div>
+          />
         )}
 
-        {/* Enhanced current position marker */}
+        {/* Starting position marker */}
+        {recordingMode && recordingMode !== "idle" && startPosition && (
+          <div
+            className="absolute w-4 h-4 bg-indigo-500 border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 z-20 rounded-sm"
+            style={{
+              left: `${startPosition.x * 100}%`,
+              top: `${startPosition.y * 100}%`,
+              opacity: recordingMode === "recording" || recordingMode === "completed" ? 0.8 : 1,
+            }}
+          />
+        )}
+
+        {/* Main position marker */}
         <div
-          className={`absolute rounded-full border-2 border-white shadow-lg cursor-grab ${
-            isDragging ? "cursor-grabbing scale-110 shadow-xl" : ""
-          } transition-all duration-300 ease-out z-30 ${
-            recordingMode === "recording" 
-              ? "bg-gradient-to-br from-red-500 to-rose-600" 
-              : "bg-gradient-to-br from-indigo-500 to-violet-700"
+          ref={markerRef}
+          className={`absolute w-6 h-6 bg-indigo-600 border-2 border-white shadow-xl transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out z-30 ${
+            isDragging ? "scale-110" : "scale-100"
           }`}
           style={{
-            width: markerSize,
-            height: markerSize,
-            left: `calc(${position.x * 100}% - ${markerSize / 2}px)`,
-            top: `calc(${position.y * 100}% - ${markerSize / 2}px)`,
-            touchAction: "none",
-            boxShadow: isDragging ? '0 0 0 3px rgba(99, 102, 241, 0.3)' : '',
+            left: `${position.x * 100}%`,
+            top: `${position.y * 100}%`,
+            borderRadius: '4px',
           }}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
         >
-          <span className="sr-only">Emotion marker</span>
-          {/* Improved pulse animation */}
-          <span
-            className={`absolute inset-0 rounded-full ${
-              recordingMode === "recording" ? "bg-red-400" : "bg-indigo-400"
-            } opacity-30 animate-ping`}
-          ></span>
-        </div>
-
-        {/* More visible recording indicator */}
-        {recordingMode === "recording" && (
-          <div className="absolute top-3 right-3 bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 animate-pulse shadow-md z-40">
-            <span className="w-2 h-2 bg-white rounded-full"></span>
-            REC
-          </div>
-        )}
-      </div>
-      
-      {/* More compact, clearer legend */}
-      <div className="mt-2 grid grid-cols-2 gap-1.5 text-2xs sm:text-xs px-1">
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-red-300 to-red-400"></div>
-          <span className="truncate">Distress (High-Neg)</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-yellow-300 to-amber-400"></div>
-          <span className="truncate">Excitement (High-Pos)</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-blue-300 to-sky-400"></div>
-          <span className="truncate">Depression (Low-Neg)</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-green-300 to-emerald-400"></div>
-          <span className="truncate">Contentment (Low-Pos)</span>
+          {/* Current emotion indicator */}
+          {currentDomain && (
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white px-2 py-1 rounded-md shadow-md text-xs font-medium whitespace-nowrap z-40">
+              <div className="flex items-center gap-1">
+                <span className="text-base">{currentDomain.emoji}</span>
+                <span>{currentDomain.label}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

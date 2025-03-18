@@ -1,155 +1,120 @@
 "use client"
 
-import { useRef } from "react"
+import React, { useRef } from "react"
 
 interface EmotionPathProps {
-  path: { x: number; y: number }[]
+  path: { x: number; y: number }[];
+  showPoints?: boolean;
+  showLabels?: boolean;
 }
 
-export function EmotionPath({ path }: EmotionPathProps) {
-  const svgRef = useRef<SVGSVGElement>(null)
-
-  if (path.length < 2) return null
-
-  // Get start and end points
-  const startPoint = path[0]
-  const endPoint = path[path.length - 1]
-
-  // Utility function to clamp values between 0 and 1
-  const margin = 0.02
-  const clampWithMargin = (val: number) => Math.min(Math.max(val, margin), 1 - margin)
-
-  // Transform x and y coordinates from the range (-1 to 1) to (0 to 100)
-  const transformCoord = (val: number) => (val + 1) * 50
-
-  // Convert normalized coordinates to SVG path
-  const pathPoints = path
-    .map((point) => {
-      const x = transformCoord(point.x)
-      const y = 100 - transformCoord(point.y)
-      return `${x},${y}`
-    })
-    .join(" ")
-
-  // Create a unique ID for the gradient
-  const gradientId = `pathGradient-${Math.random().toString(36).substring(2, 9)}`
+export const EmotionPath: React.FC<EmotionPathProps> = ({ 
+  path, 
+  showPoints = true,
+  showLabels = false
+}) => {
+  const size = 300; // Base size for calculations
+  
+  // No path or single point
+  if (!path || path.length < 2) return null;
+  
+  // Create SVG path data
+  const pathData = path.map((point, index) => {
+    // Convert normalized coordinates to pixels
+    const x = point.x * size;
+    const y = point.y * size;
+    return `${index === 0 ? 'M' : 'L'}${x},${y}`;
+  }).join(' ');
+  
+  // Create a function to determine point opacity and size
+  // to prevent visual crowding
+  const getPointStyle = (index: number, total: number) => {
+    // Always show first and last points
+    if (index === 0 || index === total - 1) {
+      return {
+        r: 3,
+        opacity: 1
+      };
+    }
+    
+    // For middle points, use a smaller size and lower opacity
+    // Show fewer points for longer paths
+    const skipFactor = Math.max(1, Math.floor(total / 20));
+    const isVisible = index % skipFactor === 0;
+    
+    return {
+      r: isVisible ? 2 : 0,
+      opacity: isVisible ? 0.7 : 0
+    };
+  };
 
   return (
-    <svg
-      ref={svgRef}
-      className="absolute top-0 left-0 w-full h-full pointer-events-none z-0"
-      style={{ filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))" }}
-    >
-      {/* Define gradient for the path with improved colors */}
-      <defs>
-        <clipPath id="chartClip">
-          <rect x="0" y="0" width="100%" height="90%" />
-        </clipPath>
-        <linearGradient
-          id={gradientId}
-          gradientUnits="userSpaceOnUse"
-          x1={`${startPoint.x * 100}%`}
-          y1={`${startPoint.y * 100}%`}
-          x2={`${endPoint.x * 100}%`}
-          y2={`${endPoint.y * 100}%`}
-        >
-          <stop offset="0%" stopColor="#4f46e5" />
-          <stop offset="33%" stopColor="#6366f1" />
-          <stop offset="66%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#ec4899" />
-        </linearGradient>
-      </defs>
-
-      {/* Wrap your drawing elements */}
-      <g clipPath="url(#chartClip)">
-        {/* Animated path with gradient and improved styling */}
-        <polyline
-          points={pathPoints}
+    <div className="absolute inset-0 pointer-events-none">
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${size} ${size}`}
+        className="emotion-path"
+        style={{ overflow: 'visible' }}
+      >
+        {/* Path line with smooth curve */}
+        <path
+          d={pathData}
           fill="none"
-          stroke={`url(#${gradientId})`}
-          strokeWidth="3.5"
+          stroke="rgba(99, 102, 241, 0.7)"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeDasharray="1000"
           strokeDashoffset="1000"
-          filter="drop-shadow(0 1px 3px rgba(0,0,0,0.15))"
           style={{
-            animation: "dash 1.5s ease-in-out forwards",
+            animation: 'dash 1.5s ease-in-out forwards',
+            filter: 'drop-shadow(0 0 2px rgba(99, 102, 241, 0.3))'
           }}
         />
-
-        {/* Start point marker with improved styling */}
-        <g className="start-marker">
-          <circle
-            cx={`${startPoint.x * 100}%`}
-            cy={`${startPoint.y * 100}%`}
-            r="6"
-            fill="#10b981"
-            stroke="white"
-            strokeWidth="2"
-            filter="drop-shadow(0 1px 3px rgba(0,0,0,0.2))"
-          />
-          <text
-            x={`${startPoint.x * 100}%`}
-            y={`${startPoint.y * 100}%`}
-            dy="-12"
-            textAnchor="middle"
-            fill="#047857"
-            fontSize="10"
-            fontWeight="bold"
-            className="bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-md"
-            filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
-          >
-            Start
-          </text>
-        </g>
-
-        {/* End point marker with improved styling */}
-        <g className="end-marker">
-          <circle
-            cx={`${endPoint.x * 100}%`}
-            cy={`${endPoint.y * 100}%`}
-            r="6"
-            fill="#ef4444"
-            stroke="white"
-            strokeWidth="2"
-            filter="drop-shadow(0 1px 3px rgba(0,0,0,0.2))"
-          />
-          <text
-            x={`${endPoint.x * 100}%`}
-            y={`${endPoint.y * 100}%`}
-            dy="-12"
-            textAnchor="middle"
-            fill="#b91c1c"
-            fontSize="10"
-            fontWeight="bold"
-            className="bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-md"
-            filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
-          >
-            End
-          </text>
-        </g>
-
-        {/* Add subtle dots at each point with improved styling */}
-        {path.map((point, index) => {
-          // Skip start and end points as they have their own markers
-          if (index === 0 || index === path.length - 1) return null
-
-          // Make points more visible with subtle glow effect
-          return (
+        
+        {/* Show only start and end points by default */}
+        {showPoints && (
+          <>
+            {/* Start point */}
             <circle
-              key={index}
-              cx={`${clampWithMargin(point.x) * 100}%`}
-              cy={`${clampWithMargin(point.y) * 100}%`}
-              r="2.2"
-              fill="rgba(99, 102, 241, 0.8)"
-              className="path-point"
-              filter="drop-shadow(0 0 1px rgba(255,255,255,0.7))"
+              cx={path[0].x * size}
+              cy={path[0].y * size}
+              r="5"
+              fill="#4f46e5"
+              className="start-marker"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(79, 70, 229, 0.6))' }}
             />
-          )
-        })}
-      </g>
-    </svg>
-  )
-}
+            
+            {/* End point */}
+            <circle
+              cx={path[path.length - 1].x * size}
+              cy={path[path.length - 1].y * size}
+              r="5"
+              fill="#ef4444"
+              className="end-marker"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(239, 68, 68, 0.6))' }}
+            />
+            
+            {/* Optional middle points with reduced visual prominence */}
+            {path.slice(1, -1).map((point, idx) => {
+              const pointStyle = getPointStyle(idx + 1, path.length);
+              return pointStyle.r > 0 ? (
+                <circle
+                  key={`point-${idx}`}
+                  cx={point.x * size}
+                  cy={point.y * size}
+                  r={pointStyle.r}
+                  fill="rgba(99, 102, 241, 0.6)"
+                  opacity={pointStyle.opacity}
+                  className="path-point"
+                />
+              ) : null;
+            })}
+          </>
+        )}
+      </svg>
+    </div>
+  );
+};
 

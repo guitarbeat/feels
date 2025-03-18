@@ -77,6 +77,9 @@ export default function EmotionTracker() {
   // Add state for emotion notes
   const [emotionNotes, setEmotionNotes] = useState("")
 
+  // Add new state for path optimization
+  const [pathOptimizationLevel, setPathOptimizationLevel] = useState<'low'|'medium'|'high'>('medium');
+  
   // Calculate valence and arousal from normalized position
   const getValenceArousal = useCallback((x: number, y: number) => {
     const valence = x * 2 - 1 // Normalize to -1 to 1
@@ -87,34 +90,65 @@ export default function EmotionTracker() {
     }
   }, [])
 
-  // Update the getEmotionFromVA function to include emojis
+  // Update the getEmotionFromVA function to use the domain-based approach
   const getEmotionFromVA = useCallback((valence: number, arousal: number): { label: string; emoji: string } => {
+    // Convert from -1,1 range to 0,1 range for domain matching
+    const normalizedValence = (valence + 1) / 2;
+    const normalizedArousal = (1 - arousal) / 2; // Invert arousal for proper matching
+    
+    // Emotion domains organized by quadrants and intensity
+    const domains = [
+      // Q1: Positive valence, high arousal (top right)
+      { valenceRange: [0.7, 1], arousalRange: [0, 0.3], label: "Excited", emoji: "🤩" },
+      { valenceRange: [0.6, 0.85], arousalRange: [0.15, 0.4], label: "Happy", emoji: "😄" },
+      { valenceRange: [0.55, 0.75], arousalRange: [0.25, 0.45], label: "Cheerful", emoji: "😊" },
+      { valenceRange: [0.5, 0.65], arousalRange: [0.35, 0.5], label: "Content", emoji: "🙂" },
+      
+      // Q2: Negative valence, high arousal (top left)
+      { valenceRange: [0, 0.3], arousalRange: [0, 0.3], label: "Angry", emoji: "😠" },
+      { valenceRange: [0.15, 0.4], arousalRange: [0.15, 0.4], label: "Tense", emoji: "😤" },
+      { valenceRange: [0.25, 0.45], arousalRange: [0.25, 0.45], label: "Nervous", emoji: "😰" },
+      { valenceRange: [0.35, 0.5], arousalRange: [0.35, 0.5], label: "Upset", emoji: "😟" },
+      
+      // Q3: Negative valence, low arousal (bottom left)
+      { valenceRange: [0, 0.3], arousalRange: [0.7, 1], label: "Sad", emoji: "😢" },
+      { valenceRange: [0.15, 0.4], arousalRange: [0.6, 0.85], label: "Depressed", emoji: "😔" },
+      { valenceRange: [0.25, 0.45], arousalRange: [0.55, 0.75], label: "Bored", emoji: "😒" },
+      { valenceRange: [0.35, 0.5], arousalRange: [0.5, 0.65], label: "Fatigued", emoji: "😪" },
+      
+      // Q4: Positive valence, low arousal (bottom right)
+      { valenceRange: [0.7, 1], arousalRange: [0.7, 1], label: "Relaxed", emoji: "😌" },
+      { valenceRange: [0.6, 0.85], arousalRange: [0.6, 0.85], label: "Calm", emoji: "😇" },
+      { valenceRange: [0.55, 0.75], arousalRange: [0.55, 0.75], label: "Serene", emoji: "🧘" },
+      { valenceRange: [0.5, 0.65], arousalRange: [0.5, 0.65], label: "At ease", emoji: "😎" },
+      
+      // Center
+      { valenceRange: [0.4, 0.6], arousalRange: [0.4, 0.6], label: "Neutral", emoji: "😐" },
+    ];
+    
+    // Find the matching domain
+    const matchingDomain = domains.find(domain => 
+      normalizedValence >= domain.valenceRange[0] && 
+      normalizedValence <= domain.valenceRange[1] && 
+      normalizedArousal >= domain.arousalRange[0] && 
+      normalizedArousal <= domain.arousalRange[1]
+    );
+    
+    if (matchingDomain) {
+      return { label: matchingDomain.label, emoji: matchingDomain.emoji };
+    }
+    
+    // Fallback to quadrant-based detection if no exact domain match
     if (valence >= 0 && arousal >= 0) {
-      if (arousal > 0.7 && valence > 0.7) return { label: "Excited", emoji: "🤩" }
-      if (arousal > 0.5 && valence > 0.5) return { label: "Happy", emoji: "😄" }
-      if (arousal > 0.3) return { label: "Cheerful", emoji: "😊" }
-      return { label: "Content", emoji: "🙂" }
+      return { label: "Content", emoji: "🙂" };
+    } else if (valence < 0 && arousal >= 0) {
+      return { label: "Upset", emoji: "😟" };
+    } else if (valence < 0 && arousal < 0) {
+      return { label: "Sad", emoji: "😢" };
+    } else {
+      return { label: "Calm", emoji: "😇" };
     }
-    if (valence < 0 && arousal >= 0) {
-      if (arousal > 0.7 && valence < -0.7) return { label: "Angry", emoji: "😠" }
-      if (arousal > 0.5 && valence < -0.5) return { label: "Tense", emoji: "😤" }
-      if (arousal > 0.3) return { label: "Nervous", emoji: "😰" }
-      return { label: "Upset", emoji: "😟" }
-    }
-    if (valence < 0 && arousal < 0) {
-      if (arousal < -0.7 && valence < -0.7) return { label: "Sad", emoji: "😢" }
-      if (arousal < -0.5 && valence < -0.5) return { label: "Depressed", emoji: "😔" }
-      if (valence < -0.3) return { label: "Bored", emoji: "😒" }
-      return { label: "Fatigued", emoji: "😪" }
-    }
-    if (valence >= 0 && arousal < 0) {
-      if (arousal < -0.7 && valence > 0.7) return { label: "Relaxed", emoji: "😌" }
-      if (arousal < -0.5 && valence > 0.5) return { label: "Calm", emoji: "😇" }
-      if (valence > 0.3) return { label: "Serene", emoji: "🧘" }
-      return { label: "At ease", emoji: "😎" }
-    }
-    return { label: "Neutral", emoji: "😐" }
-  }, [])
+  }, []);
 
   // Handle circumplex click based on the current recording mode
   const handleCircumplexClick = useCallback(
@@ -135,22 +169,69 @@ export default function EmotionTracker() {
     [recordingMode],
   )
 
+  // Enhanced path tracking with optimization to prevent crowding
+  const optimizePath = useCallback((path: {x: number, y: number}[]) => {
+    if (path.length <= 2) return path;
+    
+    // Different distance thresholds based on optimization level
+    const minDistance = pathOptimizationLevel === 'low' ? 0.01 : 
+                       pathOptimizationLevel === 'medium' ? 0.03 : 0.05;
+    
+    return path.filter((point, index, array) => {
+      if (index === 0 || index === array.length - 1) return true; // Always keep first and last points
+      
+      // Calculate distance to previous point
+      const prevPoint = array[index - 1];
+      const distance = Math.sqrt(
+        Math.pow(point.x - prevPoint.x, 2) + 
+        Math.pow(point.y - prevPoint.y, 2)
+      );
+      
+      return distance >= minDistance;
+    });
+  }, [pathOptimizationLevel]);
+
   // Handle position change during dragging
   const handlePositionChange = useCallback(
     (position: { x: number; y: number }) => {
-      setMarkerPosition(position)
+      setMarkerPosition(position);
 
       if (recordingMode === "recording") {
-        setCurrentDragPath((prev) => [...prev, position])
-        setEndPosition(position)
+        // Only record significant changes in position to avoid cluttering
+        setCurrentDragPath((prev) => {
+          if (prev.length === 0) return [position];
+          
+          const lastPoint = prev[prev.length - 1];
+          const distance = Math.sqrt(
+            Math.pow(position.x - lastPoint.x, 2) + 
+            Math.pow(position.y - lastPoint.y, 2)
+          );
+          
+          // Only add point if it moves to a different emotion domain
+          const prevEmotion = getEmotionFromVA(
+            lastPoint.x * 2 - 1, 
+            -(lastPoint.y * 2 - 1)
+          ).label;
+          
+          const currentEmotion = getEmotionFromVA(
+            position.x * 2 - 1,
+            -(position.y * 2 - 1)
+          ).label;
+          
+          if (currentEmotion !== prevEmotion || distance > 0.1) {
+            return [...prev, position];
+          }
+          return prev;
+        });
+        
+        setEndPosition(position);
       } else if (recordingMode === "start-selected" || recordingMode === "idle") {
-        // Just update the position without recording a path
-        setStartPosition(position)
-        setCurrentDragPath([position])
+        setStartPosition(position);
+        setCurrentDragPath([position]);
       }
     },
-    [recordingMode],
-  )
+    [recordingMode, getEmotionFromVA]
+  );
 
   // Start recording a path
   const startRecording = useCallback(() => {
@@ -166,8 +247,11 @@ export default function EmotionTracker() {
     if (currentDragPath.length === 1) {
       setCurrentDragPath([...currentDragPath, markerPosition])
       setEndPosition(markerPosition)
+    } else {
+      // Optimize the path to remove redundant points
+      setCurrentDragPath(prev => optimizePath(prev));
     }
-  }, [currentDragPath, markerPosition])
+  }, [currentDragPath, markerPosition, optimizePath])
 
   // Reset the current emotion selection
   const resetSelection = useCallback(() => {
@@ -467,7 +551,7 @@ export default function EmotionTracker() {
                 <CardDescription>{getStatusMessage()}</CardDescription>
               </CardHeader>
               
-              {/* Better organization of content */}
+              {/* Ensure the chart container remains square */}
               <CardContent className="p-6">
                 <div className="grid md:grid-cols-[1fr,auto] gap-6">
                   {/* Left side - Emotion Circumplex */}
@@ -484,7 +568,26 @@ export default function EmotionTracker() {
                       />
 
                       {/* Path Visualization overlay */}
-                      {currentDragPath.length > 1 && <EmotionPath path={currentDragPath} />}
+                      {currentDragPath.length > 1 && recordingMode === "completed" && (
+                        <div className="absolute inset-0 pointer-events-none">
+                          <svg width="100%" height="100%" className="emotion-path">
+                            <path
+                              d={currentDragPath
+                                .map((p, i) => `${i === 0 ? "M" : "L"}${p.x * 100},${p.y * 100}`)
+                                .join(" ")}
+                              fill="none"
+                              stroke="rgba(99, 102, 241, 0.6)"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeDasharray="1000"
+                              strokeDashoffset="1000"
+                              style={{
+                                animation: "dash 1.5s ease-in-out forwards",
+                              }}
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
