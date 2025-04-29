@@ -47,11 +47,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { type EmotionLogEntry, EmotionLogItem } from "./log/EmotionLog";
-import { EmotionCircumplex, EmotionPath } from "./visualization/EmotionVisualization";
-import { EmotionInsights } from "./log/EmotionLog";
+import { type EmotionLogEntry, EmotionLogItem, EmotionInsights } from '@/components/log/EmotionLog';
+import { EmotionCircumplex, EmotionPath } from '@/components/visualization/EmotionVisualization';
 import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage'
 import { exportEmotionData, ExportFormat } from '@/lib/exporters'
+import { getValenceArousal, getEmotionFromVA } from '@/lib/emotion-utils'
 
 export default function EmotionTracker() {
   const [markerPosition, setMarkerPosition] = useState({ x: 0.5, y: 0.5 }) // Normalized 0-1 values
@@ -76,44 +76,26 @@ export default function EmotionTracker() {
   // Add state for emotion notes
   const [emotionNotes, setEmotionNotes] = useState("")
 
-  // Calculate valence and arousal from normalized position
-  const getValenceArousal = useCallback((x: number, y: number) => {
-    const valence = x * 2 - 1 // Normalize to -1 to 1
-    const arousal = -(y * 2 - 1) // Normalize to -1 to 1, invert y-axis
-    return {
-      valence: Number.parseFloat(valence.toFixed(2)),
-      arousal: Number.parseFloat(arousal.toFixed(2)),
-    }
+  // Get current emotion data based on marker position
+  const { valence, arousal } = getValenceArousal(markerPosition.x, markerPosition.y)
+  const currentEmotionData = getEmotionFromVA(valence, arousal)
+  const currentEmotion = currentEmotionData.label
+  const currentEmoji = currentEmotionData.emoji
+
+  // Get start emotion data
+  const startVA = getValenceArousal(startPosition.x, startPosition.y)
+  const startEmotionData = getEmotionFromVA(startVA.valence, startVA.arousal)
+
+  // Update the emotion color function to match emojis better
+  const getEmotionColor = useCallback((valence: number, arousal: number): string => {
+    if (valence >= 0 && arousal >= 0) return "bg-yellow-500" // Happy/Excited
+    if (valence < 0 && arousal >= 0) return "bg-red-500" // Angry/Tense
+    if (valence < 0 && arousal < 0) return "bg-blue-500" // Sad/Depressed
+    return "bg-green-500" // Calm/Relaxed
   }, [])
 
-  // Update the getEmotionFromVA function to include emojis
-  const getEmotionFromVA = useCallback((valence: number, arousal: number): { label: string; emoji: string } => {
-    if (valence >= 0 && arousal >= 0) {
-      if (arousal > 0.7 && valence > 0.7) return { label: "Excited", emoji: "🤩" }
-      if (arousal > 0.5 && valence > 0.5) return { label: "Happy", emoji: "😄" }
-      if (arousal > 0.3) return { label: "Cheerful", emoji: "😊" }
-      return { label: "Content", emoji: "🙂" }
-    }
-    if (valence < 0 && arousal >= 0) {
-      if (arousal > 0.7 && valence < -0.7) return { label: "Angry", emoji: "😠" }
-      if (arousal > 0.5 && valence < -0.5) return { label: "Tense", emoji: "😤" }
-      if (arousal > 0.3) return { label: "Nervous", emoji: "😰" }
-      return { label: "Upset", emoji: "😟" }
-    }
-    if (valence < 0 && arousal < 0) {
-      if (arousal < -0.7 && valence < -0.7) return { label: "Sad", emoji: "😢" }
-      if (arousal < -0.5 && valence < -0.5) return { label: "Depressed", emoji: "😔" }
-      if (valence < -0.3) return { label: "Bored", emoji: "😒" }
-      return { label: "Fatigued", emoji: "😪" }
-    }
-    if (valence >= 0 && arousal < 0) {
-      if (arousal < -0.7 && valence > 0.7) return { label: "Relaxed", emoji: "😌" }
-      if (arousal < -0.5 && valence > 0.5) return { label: "Calm", emoji: "😇" }
-      if (valence > 0.3) return { label: "Serene", emoji: "🧘" }
-      return { label: "At ease", emoji: "😎" }
-    }
-    return { label: "Neutral", emoji: "😐" }
-  }, [])
+  const emotionColor = getEmotionColor(valence, arousal)
+  const startEmotionColor = getEmotionColor(startVA.valence, startVA.arousal)
 
   // Handle circumplex click based on the current recording mode
   const handleCircumplexClick = useCallback(
@@ -241,8 +223,6 @@ export default function EmotionTracker() {
     startPosition,
     endPosition,
     currentDragPath,
-    getValenceArousal,
-    getEmotionFromVA,
     emotionLog,
     editingEntryIndex,
     resetSelection,
@@ -334,31 +314,10 @@ export default function EmotionTracker() {
     }
   }, [undoStack])
 
-  // Get current emotion data based on marker position
-  const { valence, arousal } = getValenceArousal(markerPosition.x, markerPosition.y)
-  const currentEmotionData = getEmotionFromVA(valence, arousal)
-  const currentEmotion = currentEmotionData.label
-  const currentEmoji = currentEmotionData.emoji
-
-  // Get start emotion data
-  const startVA = getValenceArousal(startPosition.x, startPosition.y)
-  const startEmotionData = getEmotionFromVA(startVA.valence, startVA.arousal)
-
-  // Update the emotion color function to match emojis better
-  const getEmotionColor = useCallback((valence: number, arousal: number): string => {
-    if (valence >= 0 && arousal >= 0) return "bg-yellow-500" // Happy/Excited
-    if (valence < 0 && arousal >= 0) return "bg-red-500" // Angry/Tense
-    if (valence < 0 && arousal < 0) return "bg-blue-500" // Sad/Depressed
-    return "bg-green-500" // Calm/Relaxed
-  }, [])
-
-  const emotionColor = getEmotionColor(valence, arousal)
-  const startEmotionColor = getEmotionColor(startVA.valence, startVA.arousal)
-
   // Replace the existing exportLog function with this enhanced version
   const exportLog = useCallback((format: ExportFormat = 'json') => {
     if (emotionLog.length === 0) return;
-    
+
     const filename = `emotion-log-${new Date().toISOString().slice(0, 10)}`;
     exportEmotionData(emotionLog, format, filename);
   }, [emotionLog]);
@@ -390,7 +349,7 @@ export default function EmotionTracker() {
       setEmotionLog(savedLog);
     }
   }, []);
-  
+
   // Save data to localStorage when emotionLog changes
   useEffect(() => {
     saveToLocalStorage('emotion-log', emotionLog);
@@ -408,13 +367,13 @@ export default function EmotionTracker() {
       <div className="w-full max-w-4xl">
         <Tabs defaultValue="circumplex" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4 rounded-xl overflow-hidden bg-indigo-50/50 p-1">
-            <TabsTrigger value="circumplex" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+            <TabsTrigger value="circumplex" className="circumplex-tab data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-all duration-200 border border-indigo-200 data-[state=active]:border-indigo-400 data-[state=active]:text-indigo-900 data-[state=active]:scale-105">
               Circumplex Model
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+            <TabsTrigger value="history" className="circumplex-tab data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-all duration-200 border border-indigo-200 data-[state=active]:border-indigo-400 data-[state=active]:text-indigo-900 data-[state=active]:scale-105">
               Emotion History
             </TabsTrigger>
-            <TabsTrigger value="insights" className="data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg">
+            <TabsTrigger value="insights" className="circumplex-tab data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 transition-all duration-200 border border-indigo-200 data-[state=active]:border-indigo-400 data-[state=active]:text-indigo-900 data-[state=active]:scale-105">
               Scientific Insights
             </TabsTrigger>
           </TabsList>
@@ -446,13 +405,12 @@ export default function EmotionTracker() {
                     </TooltipProvider>
                   </span>
                   <Badge
-                    className={`${
-                      recordingMode === "recording"
+                    className={`${recordingMode === "recording"
                         ? "bg-red-500"
                         : recordingMode === "completed"
                           ? "bg-green-500"
                           : "bg-indigo-500"
-                    } text-white px-3 py-1 text-sm`}
+                      } text-white px-3 py-1 text-sm`}
                   >
                     {recordingMode === "recording"
                       ? "Recording"
@@ -465,7 +423,7 @@ export default function EmotionTracker() {
                 </CardTitle>
                 <CardDescription>{getStatusMessage()}</CardDescription>
               </CardHeader>
-              
+
               {/* Better organization of content */}
               <CardContent className="p-6">
                 <div className="grid md:grid-cols-[1fr,auto] gap-6">
@@ -486,7 +444,7 @@ export default function EmotionTracker() {
                       {currentDragPath.length > 1 && <EmotionPath path={currentDragPath} />}
                     </div>
                   </div>
-                  
+
                   {/* Right side - Controls and info */}
                   <div className="flex flex-col space-y-6 w-full md:min-w-[240px]">
                     {/* Emotion information panel */}
@@ -495,20 +453,20 @@ export default function EmotionTracker() {
                       {(recordingMode === "start-selected" ||
                         recordingMode === "recording" ||
                         recordingMode === "completed") && (
-                        <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
-                          <h3 className="text-sm font-medium text-gray-500 mb-2">Starting Emotion</h3>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${startEmotionColor}`}></div>
-                            <p className="text-base font-medium text-gray-700 flex items-center gap-1">
-                              <span className="text-xl">{startEmotionData.emoji}</span> {startEmotionData.label}
-                            </p>
+                          <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <h3 className="text-sm font-medium text-gray-500 mb-2">Starting Emotion</h3>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${startEmotionColor}`}></div>
+                              <p className="text-base font-medium text-gray-700 flex items-center gap-1">
+                                <span className="text-xl">{startEmotionData.emoji}</span> {startEmotionData.label}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-1 text-xs text-gray-500">
+                              <div>Valence: {startVA.valence}</div>
+                              <div>Arousal: {startVA.arousal}</div>
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 mt-1 text-xs text-gray-500">
-                            <div>Valence: {startVA.valence}</div>
-                            <div>Arousal: {startVA.arousal}</div>
-                          </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* Current/End Emotion */}
                       <div className="p-3 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-lg border border-gray-100 shadow-sm">
@@ -630,7 +588,7 @@ export default function EmotionTracker() {
                   </div>
                 </div>
               </CardContent>
-              
+
               <CardFooter className="bg-gray-50 px-6 py-3 border-t border-gray-100">
                 <div className="text-xs text-gray-500 flex items-center gap-2">
                   <InfoIcon className="h-3 w-3" />

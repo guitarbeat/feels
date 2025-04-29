@@ -1,4 +1,4 @@
-import type { EmotionLogEntry } from '@/components/emotion-log-item';
+import type { EmotionLogEntry } from '@/components/log/EmotionLog';
 
 export type ExportFormat = 'json' | 'csv';
 

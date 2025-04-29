@@ -6,65 +6,49 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --mono-bg: #f7f7f7;
+    --mono-fg: #222;
+    --mono-border: #bbb;
+    --mono-muted: #e4e4e4;
+    --mono-accent: #888;
+    --mono-primary: #444;
+    --mono-muted-fg: #888;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+  html, body {
+    background: var(--mono-bg);
+    color: var(--mono-fg);
+  }
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+  body, .bg-muted, .bg-primary, .bg-primary\/10, .bg-primary\/15, .bg-muted-foreground {
+    background: var(--mono-bg) !important;
+    color: var(--mono-fg) !important;
+  }
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  .border, .rounded-md, .border-muted, .border-primary {
+    border-color: var(--mono-border) !important;
+  }
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  .text-muted-foreground {
+    color: var(--mono-muted-fg) !important;
+  }
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+  button, .btn, .Button, .bg-primary, .bg-primary\/10, .bg-primary\/15 {
+    background: var(--mono-primary) !important;
+    color: var(--mono-bg) !important;
+    border-color: var(--mono-border) !important;
+  }
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+  button[variant="outline"], .btn-outline {
+    background: var(--mono-bg) !important;
+    color: var(--mono-primary) !important;
+    border: 1px solid var(--mono-primary) !important;
+  }
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+  input, .Input, .rounded-md {
+    background: var(--mono-muted) !important;
+    color: var(--mono-fg) !important;
+    border-color: var(--mono-border) !important;
   }
 }
 
@@ -154,3 +138,60 @@
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
 
+/* CSS classes for improved circumplex, marker, path, and log card visuals */
+.emotion-circumplex-container {
+  background: radial-gradient(ellipse at center, #e0e7ff 0%, #f3f4f6 70%, #fff 100%);
+  border-radius: 1rem;
+  box-shadow: 0 4px 32px 0 rgba(99,102,241,0.10);
+  transition: box-shadow 0.2s;
+}
+
+.emotion-marker-animated {
+  animation: markerPulse 2s infinite alternate ease-in-out;
+}
+
+.emotion-path-animated {
+  animation: pathDraw 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes pathDraw {
+  from {
+    stroke-dashoffset: 2000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Enhance log card visuals */
+.emotion-log-card {
+  background: linear-gradient(90deg, #f3f4f6 60%, #e0e7ff 100%);
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px 0 rgba(99,102,241,0.07);
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.emotion-log-card:hover {
+  box-shadow: 0 6px 32px 0 rgba(99,102,241,0.16);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.emotion-log-emoji {
+  font-size: 2.2rem;
+  margin-right: 1rem;
+}
+
+.emotion-log-label {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.emotion-log-notes {
+  color: #6366f1;
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
+}
