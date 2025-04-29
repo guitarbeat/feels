@@ -47,10 +47,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { EmotionCircumplex } from "@/components/emotion-circumplex"
-import { EmotionPath } from "@/components/emotion-path"
-import { type EmotionLogEntry, EmotionLogItem } from "@/components/emotion-log-item"
-import { EmotionInsights } from "@/components/emotion-insights"
+import { type EmotionLogEntry, EmotionLogItem } from "./log/EmotionLog";
+import { EmotionCircumplex, EmotionPath } from "./visualization/EmotionVisualization";
+import { EmotionInsights } from "./log/EmotionLog";
 import { saveToLocalStorage, loadFromLocalStorage } from '@/lib/local-storage'
 import { exportEmotionData, ExportFormat } from '@/lib/exporters'
 
@@ -973,4 +972,3 @@ export default function EmotionTracker() {
     </div>
   )
 }
-
